@@ -20,23 +20,25 @@ html,body{margin:0;height:100%}
 body{font-family:'Sarabun',system-ui,sans-serif;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased}
 .mono{font-family:'IBM Plex Mono',monospace}
 button{font-family:inherit;cursor:pointer;border:0;background:none}
+input,select,textarea{font-family:inherit}
 .hidden{display:none!important}
-a{color:inherit}
 
 /* ---------- AUTH ---------- */
 #auth{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:22px;background:linear-gradient(135deg,#064e3b,#0b6b4a 55%,#059669)}
-.auth-card{width:100%;max-width:410px;background:rgba(255,255,255,.07);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.16);border-radius:22px;padding:34px 32px;box-shadow:0 30px 60px -20px rgba(0,0,0,.4)}
+.auth-card{width:100%;max-width:420px;background:rgba(255,255,255,.07);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.16);border-radius:22px;padding:32px;box-shadow:0 30px 60px -20px rgba(0,0,0,.4)}
 .auth-logo{width:58px;height:58px;border-radius:16px;background:#fff;margin:0 auto;display:flex;align-items:center;justify-content:center;color:#064e3b;font-weight:700;font-size:20px}
-.auth-card h1{color:#fff;font-size:23px;font-weight:700;text-align:center;margin:14px 0 2px}
-.auth-sub{color:#9fe7c4;font-size:13px;text-align:center;margin-bottom:26px}
+.auth-card h1{color:#fff;font-size:22px;font-weight:700;text-align:center;margin:14px 0 2px}
+.auth-sub{color:#9fe7c4;font-size:13px;text-align:center;margin-bottom:22px}
 .auth-lbl{color:#9fe7c4;font-size:12.5px;margin-bottom:6px;display:block}
 .auth-in{width:100%;background:transparent;border:0;border-bottom:2px solid rgba(255,255,255,.35);padding:9px 2px;color:#fff;font-size:14px;outline:none}
-.auth-in::placeholder{color:rgba(255,255,255,.5)}
 .auth-in:focus{border-color:#fff}
 .auth-btn{width:100%;margin-top:18px;background:#facc15;color:#1a1a1a;font-weight:700;font-size:16px;padding:13px;border-radius:14px;box-shadow:0 8px 20px -8px rgba(250,204,21,.6)}
-.auth-link{text-align:center;margin-top:20px;color:#9fe7c4;font-size:13px}
+.auth-link{text-align:center;margin-top:18px;color:#9fe7c4;font-size:13px}
 .auth-link b{color:#fff;cursor:pointer;text-decoration:underline}
-.auth-msg{text-align:center;font-size:13px;margin-top:14px;min-height:18px}
+.auth-msg{text-align:center;font-size:13px;margin-top:12px;min-height:18px}
+.quick{display:flex;gap:8px;margin-top:16px}
+.quick button{flex:1;font-size:11.5px;color:#dcfbe9;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:9px;padding:8px 4px;line-height:1.35}
+.quick b{display:block;font-size:12px;color:#fff}
 
 /* ---------- SHELL ---------- */
 #app{display:flex;height:100dvh;overflow:hidden}
@@ -49,78 +51,71 @@ body.collapsed .sidebar{width:var(--sidebar-wc)}
 .sb-title span{font-size:10.5px;color:#8fe3bb}
 body.collapsed .sb-title,body.collapsed .nav-label,body.collapsed .nav-badge,body.collapsed .sb-user-info{display:none}
 .sb-nav{display:flex;flex-direction:column;gap:3px;margin-top:14px;flex:1;overflow-y:auto}
-.nav-item{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:10px;font-size:13.5px;color:#c9ede0;white-space:nowrap;transition:background .15s}
+.nav-item{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:10px;font-size:13.5px;color:#c9ede0;white-space:nowrap;transition:background .15s;text-align:left;width:100%}
 .nav-item:hover{background:rgba(255,255,255,.08)}
 .nav-item.active{background:var(--green-m);color:#fff;font-weight:600}
 .nav-ic{width:20px;text-align:center;flex-shrink:0;font-size:15px}
 .nav-badge{margin-left:auto;background:#d97706;color:#fff;font-size:10.5px;font-weight:600;padding:1px 7px;border-radius:10px}
 body.collapsed .nav-item{justify-content:center;padding:11px 0}
-.sb-logout{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:11px;background:rgba(220,38,38,.22);color:#fecaca;font-size:13px;margin-bottom:8px;white-space:nowrap}
+.sb-logout{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:11px;background:rgba(220,38,38,.22);color:#fecaca;font-size:13px;margin-bottom:8px;white-space:nowrap;width:100%}
 body.collapsed .sb-logout{justify-content:center}
 .sb-user{display:flex;align-items:center;gap:11px;padding:10px;border-radius:11px;background:rgba(255,255,255,.06)}
 .sb-ava{width:34px;height:34px;border-radius:50%;background:#8fd3b4;color:#064e3b;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}
 .sb-user-info{min-width:0;overflow:hidden}
 .sb-user-info b{color:#fff;font-size:13px;font-weight:600;display:block;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
 .sb-user-info span{font-size:11px;color:#8fe3bb}
-
 .main{flex:1;min-width:0;display:flex;flex-direction:column}
 .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 22px;background:#fff;border-bottom:1px solid var(--line);flex-shrink:0}
-.tb-left{display:flex;align-items:center;gap:14px;min-width:0}
+.tb-left{display:flex;align-items:center;gap:12px;min-width:0}
 .icon-btn{width:38px;height:38px;border-radius:10px;color:var(--muted);font-size:18px;display:flex;align-items:center;justify-content:center}
 .icon-btn:hover{background:var(--bg)}
-.tb-title{font-size:18px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tb-right{display:flex;align-items:center;gap:12px}
-.tb-search{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 13px;width:210px;color:#a3b0a9;font-size:12.5px}
-.tb-bell{position:relative;color:var(--muted);font-size:17px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;border-radius:10px}
-.tb-bell .dot{position:absolute;top:8px;right:9px;width:8px;height:8px;background:#ef4444;border-radius:50%;border:1.5px solid #fff}
+.tb-title{font-size:18px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tb-ava{width:36px;height:36px;border-radius:50%;background:var(--green-d);color:#dcfbe9;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px}
 .content{flex:1;overflow-y:auto;padding:22px;-webkit-overflow-scrolling:touch}
 
-/* cards / bits */
+/* bits */
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px}
 .grid{display:grid;gap:14px}
 .kpi{background:#fff;border-radius:14px;padding:15px 17px;box-shadow:0 10px 24px -14px rgba(6,78,59,.4)}
 .kpi .l{font-size:12px;color:#7d8d85}
 .kpi .v{font-size:24px;font-weight:700;margin-top:2px}
-.bar{height:4px;background:#eef4f1;border-radius:2px;margin-top:9px;overflow:hidden}
-.bar>i{display:block;height:4px;border-radius:2px}
-.btn{font-size:13px;font-weight:600;padding:9px 18px;border-radius:9px}
+.btn{font-size:13px;font-weight:600;padding:9px 18px;border-radius:9px;display:inline-block}
 .btn-p{background:var(--green);color:#fff}
 .btn-o{background:#fff;border:1px solid #cdd9d3;color:var(--muted)}
 .btn-x{background:var(--green-soft);border:1px solid #b9e3ca;color:#0a6b3c}
-.chip{font-size:11px;padding:3px 9px;border-radius:12px;font-weight:600;display:inline-block}
-.chip-a{color:var(--amber);background:var(--amber-bg)}
-.chip-g{color:var(--green);background:var(--green-soft)}
-.chip-b{color:#059669;background:#e6f6ef}
+.btn-w{background:var(--amber-bg);color:#d97706}
+.chip{font-size:11px;padding:3px 9px;border-radius:12px;font-weight:600;display:inline-block;white-space:nowrap}
+.in{width:100%;border:1px solid #cdd9d3;border-radius:9px;padding:10px 12px;font-size:13.5px;outline:none;background:#fff}
+.in:focus{border-color:var(--green);box-shadow:0 0 0 2px rgba(4,120,87,.18)}
+.in[readonly]{background:#f4f8f6;color:#5b6b64}
+.lbl{font-size:12.5px;color:#5b6b64;margin-bottom:5px;display:block}
 table{width:100%;border-collapse:collapse;font-size:12.5px}
 thead tr{background:var(--bg);color:var(--muted);text-align:left}
-th{padding:12px 14px;font-weight:600}
-td{padding:12px 14px;border-top:1px solid #eef4f1}
+th{padding:11px 13px;font-weight:600}
+td{padding:11px 13px;border-top:1px solid #eef4f1}
 .tbl-wrap{overflow-x:auto;background:#fff;border:1px solid var(--line);border-radius:14px}
 .rowc{cursor:pointer}.rowc:hover{background:#f7fbf9}
 .demo-chip{position:fixed;bottom:14px;right:14px;z-index:60;background:#fffbe6;border:1px solid #f5e2a8;color:#8a6d00;font-size:11.5px;padding:7px 12px;border-radius:20px;box-shadow:0 4px 14px rgba(0,0,0,.1)}
+.items-edit input{border:1px solid #dbe5e0;border-radius:7px;padding:8px;width:100%;font-size:12.5px}
+.items-edit input:focus{border-color:var(--green);outline:none}
 
-/* mobile drawer + bottom nav (hidden on desktop) */
+/* modal */
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:70;display:none;align-items:center;justify-content:center;padding:20px}
+#modal.show{display:flex}
+.modal-card{background:#fff;border-radius:16px;padding:22px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.modal-card h3{margin:0 0 14px;font-size:16px}
+
+/* mobile */
 .scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:45;opacity:0;pointer-events:none;transition:opacity .2s}
 .scrim.show{opacity:1;pointer-events:auto}
 .bottomnav{display:none}
-
-/* ---------- A4 DOC ---------- */
-.doc-tools{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:0 auto 14px;max-width:210mm}
-.prdoc{width:210mm;max-width:100%;min-height:297mm;background:#fff;margin:0 auto;padding:12mm 14mm;box-shadow:0 4px 24px rgba(0,0,0,.12);color:#000;font-size:13.5px;line-height:1.55}
-.prdoc .items{width:100%;border-collapse:collapse}
-.prdoc .items th,.prdoc .items td{border:1px solid #000;padding:5px 7px;font-size:12.5px;vertical-align:top}
-.dot{border-bottom:1px dotted #000;display:inline-block;min-width:60px}
-
 @media (max-width:820px){
   .sidebar{position:fixed;left:0;top:0;bottom:0;z-index:50;transform:translateX(-100%);transition:transform .24s ease;width:var(--sidebar-w)!important}
   body.drawer .sidebar{transform:translateX(0)}
-  body.collapsed .sidebar{width:var(--sidebar-w)!important}
   body.collapsed .sb-title,body.collapsed .nav-label,body.collapsed .nav-badge,body.collapsed .sb-user-info{display:revert}
   body.collapsed .nav-item{justify-content:flex-start;padding:11px 12px}
   .collapse-btn{display:none}
-  .tb-search{display:none}
-  .content{padding:16px 14px 84px}
+  .content{padding:16px 14px 88px}
   .grid.k4{grid-template-columns:1fr 1fr!important}
   .grid.c2,.grid.c3{grid-template-columns:1fr!important}
   .prdoc{padding:8mm}
@@ -132,6 +127,12 @@ td{padding:12px 14px;border-top:1px solid #eef4f1}
 }
 @media (min-width:821px){ .hamb{display:none} .scrim{display:none} }
 
+/* A4 doc */
+.doc-tools{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:0 auto 14px;max-width:210mm}
+.prdoc{width:210mm;max-width:100%;min-height:297mm;background:#fff;margin:0 auto;padding:12mm 14mm;box-shadow:0 4px 24px rgba(0,0,0,.12);color:#000;font-size:13.5px;line-height:1.55}
+.prdoc .items{width:100%;border-collapse:collapse}
+.prdoc .items th,.prdoc .items td{border:1px solid #000;padding:5px 7px;font-size:12.5px;vertical-align:top}
+.dot{border-bottom:1px dotted #000;display:inline-block;min-width:60px}
 @media print{
   @page{size:A4;margin:0}
   body *{visibility:hidden!important}
@@ -151,11 +152,16 @@ td{padding:12px 14px;border-top:1px solid #eef4f1}
     <h1>THAMC PR ORDER</h1>
     <div class="auth-sub">ระบบเสนอความต้องการซื้อ · ศูนย์จัดซื้อและคลังพัสดุ</div>
     <label class="auth-lbl">ชื่อผู้ใช้ (อีเมล)</label>
-    <input class="auth-in" id="liEmail" type="email" placeholder="email@thamc.go.th" value="thanakorn@thamc.go.th">
+    <input class="auth-in" id="liEmail" type="email" placeholder="email@thamc.go.th">
     <label class="auth-lbl" style="margin-top:16px">รหัสผ่าน</label>
-    <input class="auth-in" id="liPass" type="password" placeholder="••••••••" value="demo">
+    <input class="auth-in" id="liPass" type="password" placeholder="••••••••">
     <button class="auth-btn" onclick="doLogin()">เข้าสู่ระบบ</button>
     <div class="auth-msg" id="liMsg"></div>
+    <div class="quick">
+      <button onclick="quick('kamonwan@thamc.go.th')"><b>ผู้ขอซื้อ</b>กมลวรรณ</button>
+      <button onclick="quick('thanakorn@thamc.go.th')"><b>จนท.พัสดุ</b>ธนกร</button>
+      <button onclick="quick('sawarin@thamc.go.th')"><b>ผู้ดูแลระบบ</b>สวรินทร์</button>
+    </div>
     <div class="auth-link">ยังไม่มีบัญชี? <b onclick="showAuth('register')">ลงทะเบียนที่นี่</b></div>
   </div>
 
@@ -178,27 +184,19 @@ td{padding:12px 14px;border-top:1px solid #eef4f1}
 <!-- ============ APP ============ -->
 <div id="app" class="hidden">
   <aside class="sidebar">
-    <div class="sb-head">
-      <div class="sb-logo">PR</div>
-      <div class="sb-title"><b>PR ORDER</b><span class="mono">THAMC Supply</span></div>
-    </div>
+    <div class="sb-head"><div class="sb-logo">PR</div><div class="sb-title"><b>PR ORDER</b><span class="mono">THAMC Supply</span></div></div>
     <nav class="sb-nav" id="navList"></nav>
     <button class="sb-logout" onclick="logout()"><span class="nav-ic">⤶</span><span class="nav-label">ออกจากระบบ</span></button>
-    <div class="sb-user"><div class="sb-ava" id="sbAva">สว</div><div class="sb-user-info"><b id="sbName">สวรินทร์ ผู้บริหาร</b><span id="sbRole">Admin</span></div></div>
+    <div class="sb-user"><div class="sb-ava" id="sbAva"></div><div class="sb-user-info"><b id="sbName"></b><span id="sbRole"></span></div></div>
   </aside>
-
   <div class="main">
     <div class="topbar">
       <div class="tb-left">
         <button class="icon-btn hamb" onclick="toggleDrawer()" style="display:none">☰</button>
         <button class="icon-btn collapse-btn" onclick="toggleCollapse()" title="ยืด/หดเมนู">⇄</button>
-        <div class="tb-title" id="pageTitle">ภาพรวมระบบจัดซื้อ</div>
+        <div class="tb-title" id="pageTitle"></div>
       </div>
-      <div class="tb-right">
-        <div class="tb-search">⌕ ค้นหาเลข PR...</div>
-        <button class="tb-bell">♪<span class="dot"></span></button>
-        <div class="tb-ava" id="tbAva">สว</div>
-      </div>
+      <div class="tb-ava" id="tbAva"></div>
     </div>
     <div class="content" id="content"></div>
   </div>
@@ -206,348 +204,486 @@ td{padding:12px 14px;border-top:1px solid #eef4f1}
 
 <div class="scrim" id="scrim" onclick="toggleDrawer(false)"></div>
 <nav class="bottomnav" id="bottomNav"></nav>
-<div class="demo-chip" id="demoChip">โหมดสาธิต (Demo) · ยังไม่ได้ต่อ Backend</div>
+<div class="demo-chip" id="demoChip">ใช้งานในเครื่อง · ข้อมูลบันทึกอัตโนมัติ</div>
+
+<div id="modal"><div class="modal-card"><h3 id="mTitle"></h3><div id="mBody"></div>
+<div style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px"><button class="btn btn-o" onclick="closeModal()">ยกเลิก</button><button class="btn btn-p" id="mOk">ยืนยัน</button></div></div></div>
 
 <script>
-/* =========================================================
-   CONFIG — วางลิงก์ Web App จาก Apps Script ที่นี่
-   ========================================================= */
-const CONFIG = {
-  WEB_APP_URL: "https://script.google.com/macros/s/AKfycbx1rMtJUM5V8aqgl9gWpQqHfXatlK6DTeKg_dDvqfQtVmgpa6I0lwdIVgszAPIbfQ_pRg/exec",        // <-- ใส่ URL ของ Apps Script Web App (ลงท้าย /exec) แล้ว Demo จะปิดอัตโนมัติ
-};
-const DEMO = !CONFIG.WEB_APP_URL;
-
-/* ---------- API layer (fetch → Apps Script) ---------- */
-async function api(action, args){
-  if(DEMO) return demoApi(action, args);
-  const res = await fetch(CONFIG.WEB_APP_URL, {
-    method:"POST",
-    headers:{"Content-Type":"text/plain;charset=utf-8"}, // simple request → เลี่ยง CORS preflight
-    body: JSON.stringify({action, args})
-  });
-  const data = await res.json();
-  if(data && data.error) throw new Error(data.error);
-  return data;
+/* ================= CONFIG ================= */
+const CONFIG = { WEB_APP_URL: "" };   // ← ใส่ URL Apps Script (/exec) เพื่อซิงก์ข้อมูลขึ้น Google Sheets
+function syncRemote(action, args){
+  if(!CONFIG.WEB_APP_URL) return;
+  fetch(CONFIG.WEB_APP_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action,args})}).catch(()=>{});
 }
 
-/* =========================================================
-   DEMO DATA — ข้อมูลตัวอย่าง (ตรงกับ prototype)
-   ========================================================= */
-const DEMO_PRS = [
-  {id:"PR-202607-0042",date:"1 ก.ค. 69",requester:"กมลวรรณ ศรีสุข",dept:"ห้องผ่าตัด",type:"วัสดุการแพทย์",value:139635,status:"รอตรวจรับ",dur:"2 วัน 10 ชม.",mine:true},
-  {id:"PR-202607-0041",date:"1 ก.ค. 69",requester:"วิไล จันทร์เพ็ญ",dept:"เภสัชกรรม",type:"เวชภัณฑ์",value:86400,status:"รอรับเรื่อง",dur:"—"},
-  {id:"PR-202606-0388",date:"30 มิ.ย. 69",requester:"อนุชา ทองดี",dept:"ห้องปฏิบัติการ",type:"วัสดุการแพทย์",value:54200,status:"รอรับเรื่อง",dur:"—"},
-  {id:"PR-202607-0038",date:"30 มิ.ย. 69",requester:"ศิริพร มั่นคง",dept:"เภสัชกรรม",type:"เวชภัณฑ์",value:420000,status:"เสร็จสิ้น",dur:"3 วัน 04 ชม."},
-  {id:"PR-202606-0391",date:"26 มิ.ย. 69",requester:"ปรีชา ยั่งยืน",dept:"ห้องปฏิบัติการ",type:"วัสดุการแพทย์",value:215800,status:"จัดซื้อ",dur:"5 วัน 02 ชม."}
-];
-const DEMO_ITEMS = [
-  {no:"MED-0231",name:"ชุดเครื่องมือผ่าตัดพื้นฐาน",qty:2,uom:"ชุด",price:45000},
-  {no:"MED-0248",name:"กรรไกรผ่าตัด Metzenbaum",qty:6,uom:"อัน",price:6750}
-];
-function demoApi(action,args){
-  const map = {
-    login:{success:true,user:{FullName:"สวรินทร์ ผู้บริหาร",Role:"Admin",Department:"บริหาร"}},
-    register:{success:true,message:"ลงทะเบียนสำเร็จ (สาธิต) — โปรดรอผู้ดูแลอนุมัติ"},
-    dashboard:{success:true,pendingCount:61,pendingValue:1870000,approvedMonthCount:186,total:24812600,avg:"2.4"},
-    listPRs:{success:true,data:DEMO_PRS},
-    getPR:{success:true,items:DEMO_ITEMS}
+/* ================= DATA LAYER (localStorage) ================= */
+const LS_KEY = "thamc_pr_db_v1";
+let DB = loadDB();
+function loadDB(){
+  try{ const d = JSON.parse(localStorage.getItem(LS_KEY)); if(d && d.users && d.prs) return d; }catch(_){}
+  return seedDB();
+}
+function saveDB(){ localStorage.setItem(LS_KEY, JSON.stringify(DB)); }
+function seedDB(){
+  const now = Date.now(), H = 3600e3, D = 24*H;
+  const db = {
+    users: [
+      {email:"kamonwan@thamc.go.th",pass:"1234",name:"กมลวรรณ ศรีสุข",pos:"พยาบาลวิชาชีพ",dept:"ห้องผ่าตัด",phone:"02-078-0055",role:"User",status:"Active"},
+      {email:"thanakorn@thamc.go.th",pass:"1234",name:"ธนกร พงษ์ไพบูลย์",pos:"เจ้าหน้าที่พัสดุ",dept:"พัสดุและคลัง",phone:"02-078-0050",role:"Staff",status:"Active"},
+      {email:"sawarin@thamc.go.th",pass:"1234",name:"สวรินทร์ ผู้บริหาร",pos:"ผู้จัดการ",dept:"บริหาร",phone:"02-078-0001",role:"Admin",status:"Active"},
+      {email:"narisara@thamc.go.th",pass:"1234",name:"นริศรา พูนทรัพย์",pos:"เจ้าหน้าที่",dept:"ผู้ป่วยนอก",phone:"02-078-0033",role:"User",status:"Pending"}
+    ],
+    prs: [
+      { id:"PR-202607-0042", at:new Date(now-2.4*D).toISOString(), requester:"กมลวรรณ ศรีสุข", email:"kamonwan@thamc.go.th",
+        dept:"ห้องผ่าตัด", phone:"02-078-0055", reason:"ทดแทนชุดเครื่องมือผ่าตัดที่ชำรุด เพื่อรองรับการผ่าตัดในไตรมาส 3",
+        type:"วัสดุการแพทย์", urgency:"ปกติ", committee:["นพ.ประสิทธิ์ วัฒนกุล","สุนทรี ภักดี","อนุชา ทองดี"],
+        items:[{name:"ชุดเครื่องมือผ่าตัดพื้นฐาน",code:"MED-0231",qty:2,unit:"ชุด",price:45000},{name:"กรรไกรผ่าตัด Metzenbaum",code:"MED-0248",qty:6,unit:"อัน",price:6750}],
+        status:"อนุมัติใบสั่งซื้อ",
+        log:[{t:"สร้างคำขอซื้อ",by:"กมลวรรณ ศรีสุข",at:new Date(now-2.4*D).toISOString()},
+             {t:"พัสดุรับเรื่อง",by:"ธนกร พงษ์ไพบูลย์",at:new Date(now-2.27*D).toISOString()},
+             {t:"อนุมัติใบสั่งซื้อ",by:"ธนกร พงษ์ไพบูลย์",at:new Date(now-1.2*D).toISOString(),note:"PO 6907-0142 · บ.เมดิคอล ซัพพลาย"}] },
+      { id:"PR-202607-0041", at:new Date(now-1.1*D).toISOString(), requester:"วิไล จันทร์เพ็ญ", email:"wilai@thamc.go.th",
+        dept:"เภสัชกรรม", phone:"02-078-0040", reason:"สำรองเวชภัณฑ์ประจำเดือน", type:"เวชภัณฑ์", urgency:"ปกติ",
+        committee:["ภญ.สุดา แจ่มใส","",""],
+        items:[{name:"Alcohol 70% 450ml",code:"MED-0301",qty:120,unit:"ขวด",price:45},{name:"Syringe 5ml",code:"MED-0195",qty:500,unit:"อัน",price:6.5}],
+        status:"ยื่นเสนอซื้อ",
+        log:[{t:"สร้างคำขอซื้อ",by:"วิไล จันทร์เพ็ญ",at:new Date(now-1.1*D).toISOString()}] },
+      { id:"PR-202607-0038", at:new Date(now-4*D).toISOString(), requester:"ศิริพร มั่นคง", email:"siriporn@thamc.go.th",
+        dept:"ผู้ป่วยนอก", phone:"02-078-0033", reason:"วัสดุสำนักงานไตรมาส 3", type:"วัสดุสำนักงาน", urgency:"ปกติ",
+        committee:["อรทัย มีสุข","",""],
+        items:[{name:"กระดาษ A4 80 แกรม",code:"OFF-0012",qty:100,unit:"รีม",price:105}],
+        status:"ตรวจรับแล้ว",
+        log:[{t:"สร้างคำขอซื้อ",by:"ศิริพร มั่นคง",at:new Date(now-4*D).toISOString()},
+             {t:"พัสดุรับเรื่อง",by:"ธนกร พงษ์ไพบูลย์",at:new Date(now-3.8*D).toISOString()},
+             {t:"อนุมัติใบสั่งซื้อ",by:"ธนกร พงษ์ไพบูลย์",at:new Date(now-2.5*D).toISOString(),note:"PO 6907-0139 · บ.ออฟฟิศ เซ็นเตอร์"},
+             {t:"ตรวจรับสินค้า",by:"ศิริพร มั่นคง",at:new Date(now-0.9*D).toISOString()}] }
+    ],
+    seq: { ym:"202607", n:42 }
   };
-  return Promise.resolve(map[action] || {success:true});
+  localStorage.setItem(LS_KEY, JSON.stringify(db));
+  return db;
 }
+function nextPrId(){
+  const d=new Date(), ym=String(d.getFullYear())+String(d.getMonth()+1).padStart(2,"0");
+  if(DB.seq.ym!==ym){ DB.seq.ym=ym; DB.seq.n=0; }
+  DB.seq.n++; return "PR-"+ym+"-"+String(DB.seq.n).padStart(4,"0");
+}
+function totals(items){
+  const sub=(items||[]).reduce((s,it)=>s+(parseFloat(it.qty)||0)*(parseFloat(it.price)||0),0);
+  const vat=sub*0.07; return {sub, vat, grand:sub+vat};
+}
+function money(n){ return Number(n).toLocaleString("th-TH",{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtB(n){ return "฿"+Number(Math.round(n)).toLocaleString("th-TH"); }
+function fmtDT(iso){ const d=new Date(iso); return d.toLocaleDateString("th-TH",{day:"numeric",month:"short",year:"2-digit"})+" "+d.toLocaleTimeString("th-TH",{hour:"2-digit",minute:"2-digit"}); }
+function fmtD(iso){ return new Date(iso).toLocaleDateString("th-TH",{day:"numeric",month:"short",year:"2-digit"}); }
+function fmtLong(iso){ return new Date(iso).toLocaleDateString("th-TH",{dateStyle:"long"}); }
+function dur(ms){ if(ms<0)ms=0; const d=Math.floor(ms/86400e3), h=Math.floor(ms%86400e3/3600e3), m=Math.floor(ms%3600e3/60e3);
+  return (d?d+" วัน ":"")+(h?h+" ชม. ":"")+(!d&&m?m+" นาที":"") || "ไม่กี่นาที"; }
+function findPR(id){ return DB.prs.find(p=>p.id===id); }
 
-/* =========================================================
-   STATE + NAV
-   ========================================================= */
-const MENU = [
-  {k:"dashboard",ic:"◱",t:"ภาพรวม",title:"ภาพรวมระบบจัดซื้อ"},
-  {k:"newpr",ic:"＋",t:"สร้างใบขอซื้อ",title:"สร้างใบขอซื้อ"},
-  {k:"approvals",ic:"☰",t:"รายการรอตรวจสอบ",title:"รายการรอตรวจสอบ",badge:"12"},
-  {k:"tracking",ic:"◷",t:"ติดตามสถานะ",title:"ติดตามสถานะเอกสาร"},
-  {k:"reports",ic:"▤",t:"รายงาน",title:"รายงาน"},
-  {k:"users",ic:"◎",t:"จัดการผู้ใช้งาน",title:"จัดการผู้ใช้งาน"}
-];
-const MOBILE_MENU = ["dashboard","newpr","approvals","tracking","reports"];
-let state = { screen:"dashboard", user:null };
+const STATUS_CHIP = {"ยื่นเสนอซื้อ":["รอรับเรื่อง","#b45309","#fff3e2"],"อยู่ระหว่างตรวจสอบ":["รออนุมัติ PO","#0369a1","#e0f2fe"],
+  "อนุมัติใบสั่งซื้อ":["รอตรวจรับ","#7c3aed","#f3e8ff"],"ตรวจรับแล้ว":["เสร็จสิ้น","#047857","#e3f4ea"],
+  "ต้องการการแก้ไข":["ต้องแก้ไข","#c0392b","#fdecea"],"ยกเลิก":["ยกเลิก","#6b7280","#f0f1f0"]};
+function chip(st){ const c=STATUS_CHIP[st]||["-","#666","#eee"]; return '<span class="chip" style="color:'+c[1]+';background:'+c[2]+'">'+c[0]+'</span>'; }
 
-function fmt(n){return "฿"+Number(n).toLocaleString("th-TH");}
-function statusChip(s){
-  const m={"รอตรวจรับ":"chip-a","รอรับเรื่อง":"chip-a","เสร็จสิ้น":"chip-g","จัดซื้อ":"chip-b"};
-  return `<span class="chip ${m[s]||'chip-a'}">${s}</span>`;
+/* ================= AUTH ================= */
+let USER=null, state={screen:"dashboard",trackId:null,docId:null};
+function showAuth(w){ loginCard.classList.toggle("hidden",w!=="login"); registerCard.classList.toggle("hidden",w!=="register"); }
+function quick(email){ liEmail.value=email; liPass.value="1234"; doLogin(); }
+function doLogin(){
+  const em=liEmail.value.trim().toLowerCase(), pw=liPass.value;
+  const u=DB.users.find(x=>x.email.toLowerCase()===em && x.pass===pw);
+  liMsg.style.color="#fecaca";
+  if(!u){ liMsg.textContent="อีเมลหรือรหัสผ่านไม่ถูกต้อง (บัญชีทดลอง: รหัส 1234)"; return; }
+  if(u.status!=="Active"){ liMsg.textContent="สถานะผู้ใช้: "+u.status+" — กรุณารอผู้ดูแลอนุมัติ"; return; }
+  USER=u; syncRemote("login",{email:em}); enterApp();
 }
-
-function buildNav(){
-  document.getElementById("navList").innerHTML = MENU.map(m=>
-    `<button class="nav-item" data-k="${m.k}" onclick="go('${m.k}')">
-       <span class="nav-ic">${m.ic}</span><span class="nav-label">${m.t}</span>
-       ${m.badge?`<span class="nav-badge">${m.badge}</span>`:""}
-     </button>`).join("");
-  document.getElementById("bottomNav").innerHTML = MOBILE_MENU.map(k=>{
-    const m=MENU.find(x=>x.k===k);
-    return `<button class="bn-item" data-k="${k}" onclick="go('${k}')"><span class="i">${m.ic}</span>${m.t.replace("รายการรอตรวจสอบ","รอตรวจ").replace("สร้างใบขอซื้อ","สร้าง")}</button>`;
-  }).join("");
-}
-function go(k){
-  state.screen=k;
-  const m=MENU.find(x=>x.k===k)||{title:""};
-  document.getElementById("pageTitle").textContent=m.title;
-  document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.k===k));
-  document.querySelectorAll(".bn-item").forEach(b=>b.classList.toggle("active",b.dataset.k===k));
-  toggleDrawer(false);
-  render();
-}
-function toggleCollapse(){ document.body.classList.toggle("collapsed"); }
-function toggleDrawer(force){
-  const on = force===undefined ? !document.body.classList.contains("drawer") : force;
-  document.body.classList.toggle("drawer",on);
-  document.getElementById("scrim").classList.toggle("show",on);
-}
-
-/* =========================================================
-   AUTH
-   ========================================================= */
-function showAuth(which){
-  document.getElementById("loginCard").classList.toggle("hidden",which!=="login");
-  document.getElementById("registerCard").classList.toggle("hidden",which!=="register");
-}
-async function doLogin(){
-  const email=document.getElementById("liEmail").value, pass=document.getElementById("liPass").value;
-  const msg=document.getElementById("liMsg"); msg.style.color="#fecaca"; msg.textContent="";
-  try{
-    const r=await api("login",{email,password:pass});
-    if(r.success && r.user){ state.user=r.user; enterApp(); }
-    else msg.textContent=r.message||r.error||"เข้าสู่ระบบไม่สำเร็จ";
-  }catch(e){ msg.textContent="เกิดข้อผิดพลาด: "+e.message; }
-}
-async function doRegister(){
-  const msg=document.getElementById("rgMsg");
-  const payload={name:rgName.value,position:rgPos.value,email:rgEmail.value,departmentPhone:rgPhone.value,department:rgDept.value,password:rgPass.value};
-  try{ const r=await api("register",payload); msg.style.color=r.success?"#bbf7d0":"#fecaca"; msg.textContent=r.message; if(r.success) setTimeout(()=>showAuth("login"),2500); }
-  catch(e){ msg.style.color="#fecaca"; msg.textContent=e.message; }
+function doRegister(){
+  const d={email:rgEmail.value.trim(),name:rgName.value.trim(),pos:rgPos.value.trim(),dept:rgDept.value.trim(),phone:rgPhone.value.trim(),pass:rgPass.value};
+  if(!d.email||!d.name||!d.pass){ rgMsg.style.color="#fecaca"; rgMsg.textContent="กรุณากรอกชื่อ อีเมล และรหัสผ่าน"; return; }
+  if(DB.users.some(x=>x.email.toLowerCase()===d.email.toLowerCase())){ rgMsg.style.color="#fecaca"; rgMsg.textContent="อีเมลนี้ถูกใช้แล้ว"; return; }
+  DB.users.push({...d,role:"User",status:"Pending"}); saveDB(); syncRemote("register",d);
+  rgMsg.style.color="#bbf7d0"; rgMsg.textContent="ลงทะเบียนสำเร็จ กรุณารอผู้ดูแลอนุมัติ";
+  setTimeout(()=>showAuth("login"),2200);
 }
 function enterApp(){
-  document.getElementById("auth").classList.add("hidden");
-  document.getElementById("app").classList.remove("hidden");
-  const u=state.user||{};
-  const initials=(u.FullName||"ผู้ใช้").trim().slice(0,2);
-  sbName.textContent=u.FullName||"ผู้ใช้"; sbRole.textContent=u.Role||"User";
-  sbAva.textContent=initials; tbAva.textContent=initials;
-  go("dashboard");
+  auth.classList.add("hidden"); app.classList.remove("hidden");
+  sbName.textContent=USER.name; sbRole.textContent=roleTH(USER.role)+" · "+USER.dept;
+  const ini=USER.name.trim().slice(0,2); sbAva.textContent=ini; tbAva.textContent=ini;
+  buildNav(); go(ROLE_MENUS[USER.role][0]);
 }
-function logout(){ state.user=null; document.getElementById("app").classList.add("hidden"); document.getElementById("auth").classList.remove("hidden"); showAuth("login"); }
+function logout(){ USER=null; app.classList.add("hidden"); auth.classList.remove("hidden"); showAuth("login"); liMsg.textContent=""; }
+function roleTH(r){ return {User:"ผู้ขอซื้อ",Staff:"เจ้าหน้าที่พัสดุ",Admin:"ผู้ดูแลระบบ"}[r]||r; }
 
-/* =========================================================
-   SCREENS
-   ========================================================= */
+/* ================= NAV (role-based) ================= */
+const MENU_DEFS = {
+  dashboard:{ic:"◱",t:"ภาพรวม",title:"ภาพรวมระบบจัดซื้อ"},
+  newpr:{ic:"＋",t:"สร้างใบขอซื้อ",title:"สร้างใบขอซื้อ"},
+  history:{ic:"▤",t:"รายการของฉัน",title:"รายการของฉัน"},
+  approvals:{ic:"☰",t:"รอรับเรื่อง",title:"รายการรอตรวจสอบ (รับเรื่อง)",count:()=>DB.prs.filter(p=>p.status==="ยื่นเสนอซื้อ").length},
+  po:{ic:"✓",t:"รออนุมัติ PO",title:"รายการรออนุมัติ PO",count:()=>DB.prs.filter(p=>p.status==="อยู่ระหว่างตรวจสอบ").length},
+  receive:{ic:"▣",t:"รอตรวจรับ",title:"รายการรอตรวจรับสินค้า",count:()=>DB.prs.filter(p=>p.status==="อนุมัติใบสั่งซื้อ").length},
+  tracking:{ic:"◷",t:"ติดตามสถานะ",title:"ติดตามสถานะเอกสาร"},
+  reports:{ic:"▥",t:"รายงาน",title:"รายงาน"},
+  users:{ic:"◎",t:"จัดการผู้ใช้งาน",title:"จัดการผู้ใช้งาน",count:()=>DB.users.filter(u=>u.status==="Pending").length}
+};
+const ROLE_MENUS = {
+  User:  ["newpr","history","tracking"],
+  Staff: ["dashboard","approvals","po","receive","tracking","reports"],
+  Admin: ["dashboard","newpr","approvals","po","receive","tracking","reports","users"]
+};
+function buildNav(){
+  const keys=ROLE_MENUS[USER.role];
+  navList.innerHTML=keys.map(k=>{const m=MENU_DEFS[k];const c=m.count?m.count():0;
+    return '<button class="nav-item" data-k="'+k+'" onclick="go(\''+k+'\')"><span class="nav-ic">'+m.ic+'</span><span class="nav-label">'+m.t+'</span>'+(c?'<span class="nav-badge">'+c+'</span>':'')+'</button>';}).join("");
+  bottomNav.innerHTML=keys.slice(0,5).map(k=>{const m=MENU_DEFS[k];
+    return '<button class="bn-item" data-k="'+k+'" onclick="go(\''+k+'\')"><span class="i">'+m.ic+'</span>'+m.t+'</button>';}).join("");
+  document.querySelectorAll(".nav-item,.bn-item").forEach(b=>b.classList.toggle("active",b.dataset.k===state.screen));
+}
+function go(k){
+  state.screen=k; pageTitle.textContent=(MENU_DEFS[k]||{title:""}).title;
+  document.querySelectorAll(".nav-item,.bn-item").forEach(b=>b.classList.toggle("active",b.dataset.k===k));
+  toggleDrawer(false); render();
+}
+function toggleCollapse(){ document.body.classList.toggle("collapsed"); }
+function toggleDrawer(f){ const on=f===undefined?!document.body.classList.contains("drawer"):f;
+  document.body.classList.toggle("drawer",on); scrim.classList.toggle("show",on); }
+
+/* ================= MODAL ================= */
+let _mOk=null;
+function openModal(title, bodyHTML, onOk, okText){
+  mTitle.textContent=title; mBody.innerHTML=bodyHTML; mOk.textContent=okText||"ยืนยัน";
+  _mOk=onOk; modal.classList.add("show");
+}
+function closeModal(){ modal.classList.remove("show"); _mOk=null; }
+mOk_init: document.getElementById("mOk").onclick=()=>{ if(_mOk)_mOk(); };
+
+/* ================= RENDER ================= */
 function render(){
-  const c=document.getElementById("content");
-  const f={dashboard:vDashboard,newpr:vNewPr,approvals:vApprovals,tracking:vTracking,reports:vReports,users:vUsers,document:vDocument}[state.screen];
-  c.innerHTML = f ? f() : "";
+  const f={dashboard:vDashboard,newpr:vNewPr,history:vHistory,approvals:()=>vQueue("ยื่นเสนอซื้อ"),
+    po:()=>vQueue("อยู่ระหว่างตรวจสอบ"),receive:()=>vQueue("อนุมัติใบสั่งซื้อ"),
+    tracking:vTracking,reports:vReports,users:vUsers,document:vDocument}[state.screen];
+  content.innerHTML=f?f():""; 
   if(state.screen==="document") drawQR();
+  if(state.screen==="newpr" && !document.querySelector("#itemsBody tr")) addItemRow();
 }
 
+/* ---------- Dashboard ---------- */
 function vDashboard(){
-  const recent = DEMO_PRS.slice(0,4).map(p=>
-    `<div class="rowc" style="display:flex;align-items:center;gap:12px;padding:10px;border:1px solid #eef4f1;border-radius:10px" onclick="go('tracking')">
-       <div style="flex:1"><div class="mono" style="font-size:12.5px;font-weight:600">${p.id}</div><div style="font-size:11.5px;color:#8a9a92">${p.type} · ${fmt(p.value)}</div></div>${statusChip(p.status)}
-     </div>`).join("");
-  return `
-  <div style="background:linear-gradient(135deg,#064e3b,#0b6b4a);border-radius:16px;padding:22px 24px 56px;color:#fff">
-    <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px">
-      <div><div class="mono" style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#8fe3bb;font-weight:600">Fiscal Year 2569</div>
-        <div style="font-size:14px;color:#a7ecca;margin-top:8px">มูลค่าขอซื้อสะสมทั้งปี</div><div style="font-size:28px;font-weight:700">฿24,812,600</div></div>
-      <div style="text-align:right;font-size:12.5px;color:#a7ecca">อัปเดต 3 ก.ค. 2569<br><span style="color:#8fe3bb">เวลาดำเนินการเฉลี่ย 2.4 วัน ▼</span></div>
-    </div>
-  </div>
-  <div class="grid k4" style="grid-template-columns:repeat(4,1fr);margin:-40px 6px 16px">
-    <div class="kpi"><div class="l">PR ทั้งหมด</div><div class="v">1,248</div><div class="bar"><i style="width:100%;background:#064e3b"></i></div></div>
-    <div class="kpi"><div class="l">รออนุมัติ</div><div class="v" style="color:#b45309">61</div><div class="bar"><i style="width:38%;background:#d97706"></i></div></div>
-    <div class="kpi"><div class="l">อยู่ระหว่างจัดซื้อ</div><div class="v">24</div><div class="bar"><i style="width:24%;background:#34a67d"></i></div></div>
-    <div class="kpi"><div class="l">เสร็จสิ้น (เดือนนี้)</div><div class="v" style="color:#047857">186</div><div class="bar"><i style="width:92%;background:#047857"></i></div></div>
-  </div>
-  <div class="grid c2" style="grid-template-columns:1.35fr 1fr">
-    <div class="card">
-      <div style="font-size:14px;font-weight:600;margin-bottom:16px">จำนวน PR รายเดือน</div>
-      <div style="display:flex;align-items:flex-end;gap:14px;height:130px">
-        ${[52,64,56,72,108,60].map((h,i)=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px"><div style="width:100%;height:${h}px;background:${i===4?'#047857':'#bfe3d2'};border-radius:4px 4px 0 0"></div><div style="font-size:11px;color:#7d8d85">${['ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.'][i]}</div></div>`).join("")}
-      </div>
-    </div>
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div style="font-size:14px;font-weight:600">PR ล่าสุดที่ติดตาม</div><span style="font-size:12px;color:#047857;font-weight:600;cursor:pointer" onclick="go('tracking')">ดูทั้งหมด →</span></div>
-      <div style="display:flex;flex-direction:column;gap:10px">${recent}</div>
-    </div>
-  </div>`;
+  const prs=DB.prs, t=prs.reduce((s,p)=>s+totals(p.items).grand,0);
+  const cnt=st=>prs.filter(p=>p.status===st).length;
+  const recent=[...prs].sort((a,b)=>new Date(b.at)-new Date(a.at)).slice(0,4).map(p=>
+    '<div class="rowc" style="display:flex;align-items:center;gap:12px;padding:10px;border:1px solid #eef4f1;border-radius:10px" onclick="track(\''+p.id+'\')">'+
+    '<div style="flex:1;min-width:0"><div class="mono" style="font-size:12.5px;font-weight:600">'+p.id+'</div><div style="font-size:11.5px;color:#8a9a92">'+p.type+' · '+fmtB(totals(p.items).grand)+'</div></div>'+chip(p.status)+'</div>').join("");
+  const byM={}; prs.forEach(p=>{const k=new Date(p.at).getMonth(); byM[k]=(byM[k]||0)+1;});
+  return '<div style="background:linear-gradient(135deg,#064e3b,#0b6b4a);border-radius:16px;padding:22px 24px 56px;color:#fff">'+
+    '<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px"><div>'+
+    '<div class="mono" style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#8fe3bb;font-weight:600">THAMC Central Supply</div>'+
+    '<div style="font-size:14px;color:#a7ecca;margin-top:8px">มูลค่าขอซื้อรวมในระบบ</div><div style="font-size:28px;font-weight:700">'+fmtB(t)+'</div></div>'+
+    '<div style="text-align:right;font-size:12.5px;color:#a7ecca">'+new Date().toLocaleDateString("th-TH",{dateStyle:"long"})+'</div></div></div>'+
+    '<div class="grid k4" style="grid-template-columns:repeat(4,1fr);margin:-40px 6px 16px">'+
+    '<div class="kpi"><div class="l">PR ทั้งหมด</div><div class="v">'+prs.length+'</div></div>'+
+    '<div class="kpi"><div class="l">รอรับเรื่อง / รอ PO</div><div class="v" style="color:#b45309">'+(cnt("ยื่นเสนอซื้อ")+cnt("อยู่ระหว่างตรวจสอบ"))+'</div></div>'+
+    '<div class="kpi"><div class="l">รอตรวจรับ</div><div class="v" style="color:#7c3aed">'+cnt("อนุมัติใบสั่งซื้อ")+'</div></div>'+
+    '<div class="kpi"><div class="l">เสร็จสิ้น</div><div class="v" style="color:#047857">'+cnt("ตรวจรับแล้ว")+'</div></div></div>'+
+    '<div class="grid c2" style="grid-template-columns:1.2fr 1fr">'+
+    '<div class="card"><div style="font-weight:600;margin-bottom:14px">งานค้างตามขั้นตอน</div>'+
+      [["รอรับเรื่อง",cnt("ยื่นเสนอซื้อ"),"#d97706"],["รออนุมัติ PO",cnt("อยู่ระหว่างตรวจสอบ"),"#0369a1"],["รอตรวจรับ",cnt("อนุมัติใบสั่งซื้อ"),"#7c3aed"],["ต้องแก้ไข",cnt("ต้องการการแก้ไข"),"#c0392b"]].map(r=>
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:11px"><span style="flex:0 0 110px;font-size:12.5px;color:#3d4d45">'+r[0]+'</span>'+
+      '<div style="flex:1;height:8px;background:#eef4f1;border-radius:4px"><div style="width:'+Math.min(100,r[1]*25)+'%;height:8px;background:'+r[2]+';border-radius:4px"></div></div>'+
+      '<b style="font-size:13px">'+r[1]+'</b></div>').join("")+'</div>'+
+    '<div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:14px"><b style="font-size:14px">PR ล่าสุด</b><span style="font-size:12px;color:#047857;font-weight:600;cursor:pointer" onclick="go(\'tracking\')">ดูทั้งหมด →</span></div>'+
+    '<div style="display:flex;flex-direction:column;gap:10px">'+recent+'</div></div></div>';
 }
 
-function vApprovals(){
-  const rows=DEMO_PRS.filter(p=>p.status==="รอรับเรื่อง"||p.mine).map(p=>
-    `<tr class="rowc" ${p.mine?'style="background:#fffdf6"':''} onclick="openDoc('${p.id}')">
-      <td><div class="mono" style="font-weight:600">${p.id}</div><div style="font-size:11px;color:#8a9a92">${p.date}</div></td>
-      <td><div style="font-weight:500">${p.requester} ${p.mine?'<span class="chip" style="background:#d97706;color:#fff">งานของคุณ</span>':''}</div><div style="font-size:11px;color:#8a9a92">${p.dept}</div></td>
-      <td>${p.type}</td><td style="text-align:right;font-weight:600">${fmt(p.value)}</td>
-      <td style="text-align:center"><div style="display:flex;gap:6px;justify-content:center"><button class="btn btn-p" style="padding:6px 12px;font-size:11.5px" onclick="event.stopPropagation();openDoc('${p.id}')">รับเรื่อง</button><button class="btn" style="padding:6px 11px;font-size:11.5px;background:#fff3e2;color:#d97706" onclick="event.stopPropagation()">Reject</button></div></td>
-    </tr>`).join("");
-  return `
-  <div class="grid c3" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px">
-    <div class="card"><div class="l" style="font-size:12px;color:#7d8d85">งานของคุณ</div><div style="font-size:22px;font-weight:700;color:#d97706">5</div></div>
-    <div class="card"><div class="l" style="font-size:12px;color:#7d8d85">ยังไม่มีผู้รับเรื่อง</div><div style="font-size:22px;font-weight:700">7</div></div>
-    <div class="card"><div class="l" style="font-size:12px;color:#7d8d85">มูลค่ารวมที่รอ</div><div style="font-size:22px;font-weight:700">฿1.87M</div></div>
-  </div>
-  <div class="tbl-wrap"><table><thead><tr><th>PR ID</th><th>ผู้ขอซื้อ</th><th>ประเภท</th><th style="text-align:right">มูลค่า</th><th style="text-align:center">ดำเนินการ</th></tr></thead><tbody>${rows}</tbody></table></div>`;
-}
-
-function vReports(){
-  const rows=DEMO_PRS.map(p=>
-    `<tr class="rowc" onclick="go('tracking')"><td class="mono">${p.id}</td><td style="color:#5b6b64">${p.date}</td><td>${p.dept}</td><td>${p.type}</td><td style="text-align:right;font-weight:600">${fmt(p.value)}</td><td>${statusChip(p.status)}</td><td style="text-align:center;color:#5b6b64">${p.dur}</td></tr>`).join("");
-  return `
-  <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">
-    <div style="display:flex;gap:8px"><span class="btn btn-p">รายงานภาพรวม</span><span class="btn btn-o">ตามรายการ</span></div>
-    <div style="display:flex;gap:10px"><button class="btn btn-x" onclick="exportSAP()">▤ Export Excel</button><button class="btn" style="background:#fdecea;border:1px solid #f3c9c4;color:#c0392b" onclick="window.print()">▦ Export PDF</button></div>
-  </div>
-  <div class="grid c4" style="grid-template-columns:repeat(4,1fr);margin-bottom:14px">
-    <div class="card"><div class="l" style="font-size:12px;color:#7d8d85">จำนวนที่พบ</div><div style="font-size:20px;font-weight:700">1,248</div></div>
-    <div class="card"><div class="l" style="font-size:12px;color:#7d8d85">มูลค่ารวม</div><div style="font-size:20px;font-weight:700;color:#047857">฿24.8M</div></div>
-    <div class="card"><div class="l" style="font-size:12px;color:#7d8d85">เสร็จสิ้นแล้ว</div><div style="font-size:20px;font-weight:700">1,163</div></div>
-    <div class="card"><div class="l" style="font-size:12px;color:#7d8d85">เวลาเฉลี่ย</div><div style="font-size:20px;font-weight:700">2.4 วัน</div></div>
-  </div>
-  <div class="tbl-wrap"><table><thead><tr><th>PR ID</th><th>วันที่</th><th>หน่วยงาน</th><th>ประเภท</th><th style="text-align:right">มูลค่า</th><th>สถานะ</th><th style="text-align:center">เวลาที่ใช้</th></tr></thead><tbody>${rows}</tbody></table></div>`;
-}
-
-function vUsers(){
-  const U=[
-    ["narisara@thamc.go.th","นริศรา พูนทรัพย์","ผู้ป่วยนอก","User","Pending"],
-    ["wichai@thamc.go.th","วิชัย รุ่งเรือง","ห้องปฏิบัติการ","User","Pending"],
-    ["thanakorn@thamc.go.th","ธนกร พงษ์ไพบูลย์","พัสดุและคลัง","Staff","Active"],
-    ["kamonwan@thamc.go.th","กมลวรรณ ศรีสุข","ห้องผ่าตัด","User","Active"],
-    ["sawarin@thamc.go.th","สวรินทร์ ผู้บริหาร","บริหาร","Admin","Active"]
-  ];
-  const act={Pending:'<button class="btn btn-p" style="padding:6px 13px;font-size:11.5px">อนุมัติ</button>',Active:'<button class="btn" style="padding:6px 13px;font-size:11.5px;background:#fff3e2;color:#b45309">ปิดใช้งาน</button>'};
-  const sc={Pending:"chip-a",Active:"chip-g",Admin:"chip-g"};
-  const rows=U.map(u=>`<tr ${u[4]==='Pending'?'style="background:#fffdf6"':''}><td class="mono" style="color:#3d4d45">${u[0]}</td><td style="font-weight:500">${u[1]}</td><td>${u[2]}</td><td>${u[3]}</td><td><span class="chip ${sc[u[4]]||'chip-a'}">${u[4]}</span></td><td style="text-align:center">${act[u[4]]||'—'}</td></tr>`).join("");
-  return `<div class="tbl-wrap"><table><thead><tr><th>ผู้ใช้ (อีเมล)</th><th>ชื่อ-สกุล</th><th>หน่วยงาน</th><th>Role</th><th>สถานะ</th><th style="text-align:center">การจัดการ</th></tr></thead><tbody>${rows}</tbody></table></div>`;
-}
-
+/* ---------- Create PR (real form) ---------- */
 function vNewPr(){
-  const items=DEMO_ITEMS.map((it,i)=>`<tr><td style="text-align:center">${i+1}</td><td>${it.name} (${it.no})</td><td style="text-align:center">${it.qty} ${it.uom}</td><td style="text-align:right">${it.price.toLocaleString()}.00</td><td style="text-align:right;font-weight:600">${(it.qty*it.price).toLocaleString()}.00</td></tr>`).join("");
-  return `
-  <div style="max-width:1000px;display:flex;flex-direction:column;gap:16px">
-    <div class="card"><div style="font-weight:600;border-bottom:1px solid #eef4f1;padding-bottom:10px;margin-bottom:14px"><span class="mono" style="color:#047857;margin-right:8px">01</span>ข้อมูลทั่วไป</div>
-      <div class="grid c3" style="grid-template-columns:repeat(3,1fr)">
-        <div><div style="font-size:12.5px;color:#5b6b64;margin-bottom:5px">ชื่อผู้เบิก</div><input style="width:100%;background:#f4f8f6;border:1px solid #e8eeeb;border-radius:9px;padding:10px 12px" value="กมลวรรณ ศรีสุข" readonly></div>
-        <div><div style="font-size:12.5px;color:#5b6b64;margin-bottom:5px">หน่วยงาน</div><input style="width:100%;background:#f4f8f6;border:1px solid #e8eeeb;border-radius:9px;padding:10px 12px" value="ห้องผ่าตัด" readonly></div>
-        <div><div style="font-size:12.5px;color:#5b6b64;margin-bottom:5px">ความเร่งด่วน</div><div style="display:flex;gap:8px"><span class="btn btn-p" style="flex:1;text-align:center">ปกติ</span><span class="btn btn-o" style="flex:1;text-align:center">เร่งด่วน</span></div></div>
-        <div style="grid-column:span 3"><div style="font-size:12.5px;color:#5b6b64;margin-bottom:5px">เหตุผลการขอซื้อ</div><textarea style="width:100%;border:1px solid #cdd9d3;border-radius:9px;padding:10px 12px;font-family:inherit" rows="2">ทดแทนชุดเครื่องมือผ่าตัดที่ชำรุด เพื่อรองรับการผ่าตัดในไตรมาส 3</textarea></div>
-      </div>
-    </div>
-    <div class="card"><div style="font-weight:600;border-bottom:1px solid #eef4f1;padding-bottom:10px;margin-bottom:14px"><span class="mono" style="color:#047857;margin-right:8px">02</span>รายการสินค้า</div>
-      <div class="tbl-wrap" style="border:1px solid #eef4f1"><table><thead><tr><th style="text-align:center">ลำดับ</th><th>รายการ</th><th style="text-align:center">จำนวน</th><th style="text-align:right">ราคา/หน่วย</th><th style="text-align:right">รวม</th></tr></thead><tbody>${items}</tbody></table></div>
-      <div style="display:flex;justify-content:flex-end;margin-top:14px"><div style="width:280px"><div style="display:flex;justify-content:space-between;font-size:13px;color:#5b6b64"><span>มูลค่าสินค้า</span><span>130,500.00</span></div><div style="display:flex;justify-content:space-between;font-size:13px;color:#5b6b64;margin-top:6px"><span>VAT 7%</span><span>9,135.00</span></div><div style="display:flex;justify-content:space-between;font-size:16px;font-weight:700;border-top:1px solid #e8eeeb;padding-top:8px;margin-top:8px"><span>รวมสุทธิ</span><span style="color:#047857">139,635.00</span></div></div></div>
-    </div>
-    <div style="display:flex;justify-content:flex-end;gap:12px"><button class="btn btn-o" style="padding:12px 24px">บันทึกร่าง</button><button class="btn btn-p" style="padding:12px 30px" onclick="openDoc('PR-202607-0042')">ส่งใบขอซื้อ &amp; ออกเอกสาร</button></div>
-  </div>`;
+  return '<div style="max-width:1000px;display:flex;flex-direction:column;gap:16px">'+
+  '<div class="card"><div style="font-weight:600;border-bottom:1px solid #eef4f1;padding-bottom:10px;margin-bottom:14px"><span class="mono" style="color:#047857;margin-right:8px">01</span>ข้อมูลทั่วไป</div>'+
+    '<div class="grid c3" style="grid-template-columns:repeat(3,1fr)">'+
+    '<div><label class="lbl">ชื่อผู้เบิก</label><input class="in" value="'+USER.name+'" readonly></div>'+
+    '<div><label class="lbl">หน่วยงาน</label><input class="in" value="'+USER.dept+'" readonly></div>'+
+    '<div><label class="lbl">เบอร์โทรหน่วยงาน</label><input class="in" id="fPhone" value="'+(USER.phone||"")+'"></div>'+
+    '<div style="grid-column:span 3"><label class="lbl">เหตุผลการขอซื้อ <b style="color:#ef4444">*</b></label><textarea class="in" id="fReason" rows="2" placeholder="ชี้แจงเหตุผลความจำเป็น..."></textarea></div>'+
+    '<div style="grid-column:span 2"><label class="lbl">ประเภทพัสดุ <b style="color:#ef4444">*</b></label><select class="in" id="fType"><option>วัสดุการแพทย์</option><option>เวชภัณฑ์</option><option>วัสดุสำนักงาน</option><option>วัสดุคอมพิวเตอร์</option><option>อื่น ๆ</option></select></div>'+
+    '<div><label class="lbl">ความเร่งด่วน</label><select class="in" id="fUrgency"><option>ปกติ</option><option>เร่งด่วน</option></select></div></div></div>'+
+  '<div class="card"><div style="font-weight:600;border-bottom:1px solid #eef4f1;padding-bottom:10px;margin-bottom:14px"><span class="mono" style="color:#047857;margin-right:8px">02</span>รายการสินค้า</div>'+
+    '<div class="tbl-wrap items-edit" style="border:1px solid #eef4f1"><table><thead><tr><th style="min-width:220px">ชื่อรายการ *</th><th style="width:110px">รหัส</th><th style="width:80px">จำนวน *</th><th style="width:90px">หน่วย</th><th style="width:120px">ราคา/หน่วย</th><th style="width:110px;text-align:right">รวม</th><th style="width:44px"></th></tr></thead><tbody id="itemsBody"></tbody></table></div>'+
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-top:14px;flex-wrap:wrap;gap:12px">'+
+    '<button class="btn" style="color:#047857;border:1px dashed #8fd3b4" onclick="addItemRow()">＋ เพิ่มรายการ</button>'+
+    '<div style="width:280px"><div style="display:flex;justify-content:space-between;font-size:13px;color:#5b6b64"><span>มูลค่าสินค้า</span><span id="tSub">0.00</span></div>'+
+    '<div style="display:flex;justify-content:space-between;font-size:13px;color:#5b6b64;margin-top:6px"><span>ภาษีมูลค่าเพิ่ม 7%</span><span id="tVat">0.00</span></div>'+
+    '<div style="display:flex;justify-content:space-between;font-size:16px;font-weight:700;border-top:1px solid #e8eeeb;padding-top:8px;margin-top:8px"><span>ยอดรวมสุทธิ</span><span id="tGrand" style="color:#047857">0.00</span></div></div></div></div>'+
+  '<div class="card"><div style="font-weight:600;border-bottom:1px solid #eef4f1;padding-bottom:10px;margin-bottom:14px"><span class="mono" style="color:#047857;margin-right:8px">03</span>กรรมการตรวจรับ <span style="font-weight:400;font-size:11.5px;color:#8a9a92">(เกิน 100,000 บาท ต้องมี 3 คน)</span></div>'+
+    '<div class="grid c3" style="grid-template-columns:repeat(3,1fr)">'+
+    '<div><label class="lbl">ประธานกรรมการ <b style="color:#ef4444">*</b></label><input class="in" id="fC1"></div>'+
+    '<div><label class="lbl">กรรมการ</label><input class="in" id="fC2"></div>'+
+    '<div><label class="lbl">กรรมการและเลขานุการ</label><input class="in" id="fC3"></div></div></div>'+
+  '<div style="display:flex;justify-content:flex-end;gap:12px"><button class="btn btn-p" style="padding:12px 30px;font-size:14px" onclick="submitPR()">ส่งใบขอซื้อ &amp; ออกเอกสาร</button></div>'+
+  '<div id="formMsg" style="text-align:right;font-size:13px;color:#c0392b;min-height:18px"></div></div>';
+}
+function addItemRow(){
+  const tr=document.createElement("tr");
+  tr.innerHTML='<td><input class="it-name" placeholder="ชื่อรายการ..."></td><td><input class="it-code" placeholder="รหัส"></td>'+
+    '<td><input class="it-qty" type="number" min="1" value="1"></td><td><input class="it-unit" placeholder="หน่วย"></td>'+
+    '<td><input class="it-price" type="number" min="0" step="0.01" placeholder="0.00"></td>'+
+    '<td style="text-align:right;font-weight:600" class="it-total">0.00</td>'+
+    '<td style="text-align:center"><button style="color:#ef4444;font-weight:700" onclick="this.closest(\'tr\').remove();recalc()">✕</button></td>';
+  document.getElementById("itemsBody").appendChild(tr);
+  tr.querySelectorAll("input").forEach(i=>i.addEventListener("input",recalc));
+}
+function readItems(){
+  return [...document.querySelectorAll("#itemsBody tr")].map(tr=>({
+    name:tr.querySelector(".it-name").value.trim(), code:tr.querySelector(".it-code").value.trim(),
+    qty:parseFloat(tr.querySelector(".it-qty").value)||0, unit:tr.querySelector(".it-unit").value.trim(),
+    price:parseFloat(tr.querySelector(".it-price").value)||0, _tr:tr }));
+}
+function recalc(){
+  const items=readItems();
+  items.forEach(it=>{ it._tr.querySelector(".it-total").textContent=money(it.qty*it.price); });
+  const t=totals(items);
+  tSub.textContent=money(t.sub); tVat.textContent=money(t.vat); tGrand.textContent=money(t.grand);
+}
+function submitPR(){
+  const items=readItems().filter(it=>it.name && it.qty>0).map(({_tr,...it})=>it);
+  const reason=fReason.value.trim(), c1=fC1.value.trim();
+  const msg=document.getElementById("formMsg");
+  if(!reason){ msg.textContent="กรุณากรอกเหตุผลการขอซื้อ"; return; }
+  if(items.length===0){ msg.textContent="กรุณาเพิ่มรายการสินค้าอย่างน้อย 1 รายการ (ต้องมีชื่อและจำนวน)"; return; }
+  if(!c1){ msg.textContent="กรุณาระบุประธานกรรมการตรวจรับ"; return; }
+  const pr={ id:nextPrId(), at:new Date().toISOString(), requester:USER.name, email:USER.email,
+    dept:USER.dept, phone:fPhone.value.trim(), reason, type:fType.value, urgency:fUrgency.value,
+    committee:[c1,fC2.value.trim(),fC3.value.trim()], items, status:"ยื่นเสนอซื้อ",
+    log:[{t:"สร้างคำขอซื้อ",by:USER.name,at:new Date().toISOString()}] };
+  DB.prs.unshift(pr); saveDB(); syncRemote("submitPR",{pr}); buildNav();
+  openDoc(pr.id);
 }
 
-function stepper(){
-  const steps=[["สร้างคำขอ","1 ก.ค.",1],["พัสดุรับเรื่อง","1 ก.ค.",1],["จัดซื้อ","2 ก.ค.",1],["ตรวจรับ","กำลังทำ",2],["เสร็จสิ้น","—",0]];
-  return `<div style="display:flex;align-items:flex-start;margin-bottom:24px;overflow-x:auto">${steps.map((s,i)=>{
-    const done=s[2]===1,cur=s[2]===2;
-    const circle=done?`<div style="width:32px;height:32px;border-radius:50%;background:#047857;color:#fff;display:flex;align-items:center;justify-content:center">✓</div>`
-      :cur?`<div style="width:32px;height:32px;border-radius:50%;background:#fff;border:2px solid #d97706;color:#d97706;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 4px #fff3e2">${i+1}</div>`
-      :`<div style="width:32px;height:32px;border-radius:50%;background:#f0f3f1;border:2px solid #e8eeeb"></div>`;
-    return `<div style="flex:1;min-width:70px;display:flex;flex-direction:column;align-items:center;text-align:center;position:relative">${circle}${i<4?`<div style="position:absolute;top:16px;left:50%;width:100%;height:2px;background:${done?'#047857':'#e8eeeb'}"></div>`:''}<div style="font-size:12px;font-weight:600;margin-top:9px;color:${cur?'#d97706':done?'#12211b':'#a3b0a9'}">${s[0]}</div><div style="font-size:10.5px;color:#8a9a92;margin-top:2px">${s[1]}</div></div>`;
-  }).join("")}</div>`;
+/* ---------- My PRs (User) ---------- */
+function vHistory(){
+  const mine=DB.prs.filter(p=>p.email===USER.email || USER.role!=="User");
+  if(!mine.length) return '<div class="card" style="text-align:center;color:#8a9a92;padding:40px">ยังไม่มีรายการ — เริ่มที่ "สร้างใบขอซื้อ"</div>';
+  const rows=mine.map(p=>{
+    const note=p.status==="ต้องการการแก้ไข"&&p.rejectNote?'<div style="font-size:11px;color:#c0392b;margin-top:3px">เหตุผล: '+p.rejectNote+'</div>':"";
+    return '<tr class="rowc" onclick="track(\''+p.id+'\')"><td><div class="mono" style="font-weight:600">'+p.id+'</div><div style="font-size:11px;color:#8a9a92">'+fmtD(p.at)+'</div></td>'+
+    '<td>'+p.type+note+'</td><td style="text-align:right;font-weight:600">'+fmtB(totals(p.items).grand)+'</td><td>'+chip(p.status)+'</td>'+
+    '<td style="text-align:center"><button class="btn btn-o" style="padding:5px 12px;font-size:11.5px" onclick="event.stopPropagation();openDoc(\''+p.id+'\')">เอกสาร</button></td></tr>';}).join("");
+  return '<div class="tbl-wrap"><table><thead><tr><th>PR ID</th><th>ประเภท</th><th style="text-align:right">มูลค่า</th><th>สถานะ</th><th style="text-align:center">ใบขอซื้อ</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
 }
-function tItem(done,title,who,time,dur,cur){
-  const circle=done?`<div style="width:26px;height:26px;border-radius:50%;background:#047857;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px">✓</div>`
-    :cur?`<div style="width:26px;height:26px;border-radius:50%;background:#fff;border:2px solid #d97706;color:#d97706;font-weight:700;font-size:11px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 3px #fff3e2">4</div>`
-    :`<div style="width:26px;height:26px;border-radius:50%;background:#f0f3f1;border:2px solid #e8eeeb"></div>`;
-  return `<div style="display:flex;gap:14px"><div style="display:flex;flex-direction:column;align-items:center">${circle}<div style="width:2px;flex:1;background:${done?'#cfe9dd':'#e8eeeb'};margin:3px 0"></div></div>
-    <div style="flex:1;padding-bottom:14px"><div style="display:flex;justify-content:space-between"><span style="font-size:13.5px;font-weight:600;color:${cur?'#12211b':done?'#12211b':'#a3b0a9'}">${title}</span><span class="mono" style="font-size:11px;color:#8a9a92">${time}</span></div>
-    ${who?`<div style="font-size:12px;color:#7d8d85;margin-top:3px">${who}</div>`:''}${dur?`<div style="display:inline-block;margin-top:6px;font-size:10.5px;color:${cur?'#d97706':'#5b6b64'};background:${cur?'#fff3e2':'#eef4f1'};padding:3px 8px;border-radius:6px">⏱ ${dur}</div>`:''}</div></div>`;
+
+/* ---------- Staff queues ---------- */
+function vQueue(status){
+  const list=DB.prs.filter(p=>p.status===status);
+  const totalVal=list.reduce((s,p)=>s+totals(p.items).grand,0);
+  const actions={"ยื่นเสนอซื้อ":['<button class="btn btn-p" style="padding:6px 12px;font-size:11.5px" onclick="event.stopPropagation();actAccept(\'{ID}\')">รับเรื่อง</button>',
+      '<button class="btn btn-w" style="padding:6px 11px;font-size:11.5px" onclick="event.stopPropagation();actReject(\'{ID}\')">ส่งกลับแก้ไข</button>'],
+    "อยู่ระหว่างตรวจสอบ":['<button class="btn btn-p" style="padding:6px 12px;font-size:11.5px" onclick="event.stopPropagation();actPO(\'{ID}\')">อนุมัติ PO</button>'],
+    "อนุมัติใบสั่งซื้อ":['<button class="btn btn-p" style="padding:6px 12px;font-size:11.5px" onclick="event.stopPropagation();actReceive(\'{ID}\')">ตรวจรับ</button>']}[status]||[];
+  const rows=list.map(p=>'<tr class="rowc" onclick="track(\''+p.id+'\')">'+
+    '<td><div class="mono" style="font-weight:600">'+p.id+'</div><div style="font-size:11px;color:#8a9a92">'+fmtDT(p.at)+'</div></td>'+
+    '<td><div style="font-weight:500">'+p.requester+'</div><div style="font-size:11px;color:#8a9a92">'+p.dept+'</div></td>'+
+    '<td>'+p.type+'</td><td style="text-align:right;font-weight:600">'+fmtB(totals(p.items).grand)+'</td>'+
+    '<td style="text-align:center"><div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap">'+actions.map(a=>a.split("{ID}").join(p.id)).join("")+
+    '<button class="btn btn-o" style="padding:6px 11px;font-size:11.5px" onclick="event.stopPropagation();openDoc(\''+p.id+'\')">เอกสาร</button>'+
+    '<button class="btn btn-x" style="padding:6px 11px;font-size:11.5px" onclick="event.stopPropagation();exportSAP(\''+p.id+'\')">Excel SAP</button></div></td></tr>').join("");
+  return '<div class="grid c3" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px">'+
+    '<div class="card"><div style="font-size:12px;color:#7d8d85">จำนวนรายการ</div><div style="font-size:22px;font-weight:700;color:#d97706">'+list.length+'</div></div>'+
+    '<div class="card"><div style="font-size:12px;color:#7d8d85">มูลค่ารวม</div><div style="font-size:22px;font-weight:700">'+fmtB(totalVal)+'</div></div>'+
+    '<div class="card"><div style="font-size:12px;color:#7d8d85">สถานะขั้นตอน</div><div style="font-size:15px;font-weight:600;margin-top:4px">'+((STATUS_CHIP[status]||["-"])[0])+'</div></div></div>'+
+    (list.length? '<div class="tbl-wrap"><table><thead><tr><th>PR ID</th><th>ผู้ขอซื้อ</th><th>ประเภท</th><th style="text-align:right">มูลค่า</th><th style="text-align:center">ดำเนินการ</th></tr></thead><tbody>'+rows+'</tbody></table></div>'
+     : '<div class="card" style="text-align:center;color:#8a9a92;padding:40px">ไม่มีรายการค้างในขั้นตอนนี้ ✓</div>');
 }
+function pushLog(p,t,note){ p.log.push({t,by:USER.name,at:new Date().toISOString(),note:note||""}); }
+function actAccept(id){ const p=findPR(id);
+  openModal("ยืนยันการรับเรื่อง",'<div style="font-size:13.5px">รับเรื่อง <b class="mono">'+id+'</b> ('+p.requester+' · '+fmtB(totals(p.items).grand)+') เพื่อตรวจสอบ?</div>',()=>{
+    p.status="อยู่ระหว่างตรวจสอบ"; pushLog(p,"พัสดุรับเรื่อง"); saveDB(); syncRemote("updateStatus",{prId:id,actionType:"accept"}); closeModal(); buildNav(); render(); });}
+function actReject(id){
+  openModal("ส่งกลับเพื่อแก้ไข",'<label class="lbl">เหตุผล <b style="color:#ef4444">*</b></label><textarea class="in" id="mReason" rows="3" placeholder="ระบุสิ่งที่ต้องแก้ไข..."></textarea>',()=>{
+    const r=document.getElementById("mReason").value.trim(); if(!r)return;
+    const p=findPR(id); p.status="ต้องการการแก้ไข"; p.rejectNote=r; pushLog(p,"ส่งกลับแก้ไข",r);
+    saveDB(); syncRemote("updateStatus",{prId:id,actionType:"reject",payload:{note:r}}); closeModal(); buildNav(); render(); },"ส่งกลับ");}
+function actPO(id){
+  openModal("อนุมัติใบสั่งซื้อ (PO)",'<label class="lbl">เลขที่ PO <b style="color:#ef4444">*</b></label><input class="in" id="mPO" placeholder="เช่น 6907-0142">'+
+    '<label class="lbl" style="margin-top:12px">ผู้ขาย</label><input class="in" id="mVendor" placeholder="ชื่อบริษัทผู้ขาย">',()=>{
+    const po=document.getElementById("mPO").value.trim(); if(!po)return;
+    const v=document.getElementById("mVendor").value.trim();
+    const p=findPR(id); p.status="อนุมัติใบสั่งซื้อ"; p.po={number:po,vendor:v};
+    pushLog(p,"อนุมัติใบสั่งซื้อ","PO "+po+(v?" · "+v:"")); saveDB(); syncRemote("updateStatus",{prId:id,actionType:"approve_po",payload:{po,vendor:v}}); closeModal(); buildNav(); render(); },"อนุมัติ");}
+function actReceive(id){
+  openModal("ยืนยันการตรวจรับสินค้า",'<label class="lbl">วันที่ตรวจรับ</label><input class="in" id="mDate" type="date" value="'+new Date().toISOString().slice(0,10)+'">',()=>{
+    const p=findPR(id); p.status="ตรวจรับแล้ว"; pushLog(p,"ตรวจรับสินค้า");
+    saveDB(); syncRemote("updateStatus",{prId:id,actionType:"receive"}); closeModal(); buildNav(); render(); },"ตรวจรับ");}
+
+/* ---------- Tracking ---------- */
+function track(id){ state.trackId=id; go("tracking"); }
 function vTracking(){
-  return `
-  <div class="card" style="margin-bottom:16px;display:flex;gap:12px;flex-wrap:wrap;align-items:end">
-    <div style="flex:2;min-width:200px"><div style="font-size:12px;color:#5b6b64;margin-bottom:5px">เลข PR ID</div><input class="mono" style="width:100%;border:1px solid #cdd9d3;border-radius:9px;padding:10px 12px" value="PR-202607-0042"></div>
-    <button class="btn btn-p" style="padding:11px 26px">ค้นหา</button>
-  </div>
-  <div class="card">
-    <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;padding-bottom:16px;border-bottom:1px solid #eef4f1;margin-bottom:20px">
-      <div><div class="mono" style="font-size:16px;font-weight:600;color:#047857">PR-202607-0042</div><div style="font-size:13px;color:#3d4d45;margin-top:4px">ชุดเครื่องมือผ่าตัด · ห้องผ่าตัด · ฿139,635</div></div>
-      <div style="text-align:right"><span class="chip chip-a" style="font-size:12.5px;padding:7px 14px">● รอตรวจรับสินค้า</span>
-        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px;flex-wrap:wrap"><button class="btn btn-o" style="padding:6px 12px;font-size:11.5px" onclick="openDoc('PR-202607-0042')">🖨 ใบเสนอความต้องการซื้อ</button><button class="btn btn-x" style="padding:6px 12px;font-size:11.5px" onclick="exportSAP()">▤ ดึง Excel ทำ PR (SAP)</button></div></div>
-    </div>
-    ${stepper()}
-    <div class="grid c2" style="grid-template-columns:1fr 1fr;gap:20px">
-      <div>${tItem(1,"สร้างคำขอซื้อ","กมลวรรณ ศรีสุข · พยาบาลวิชาชีพ","1 ก.ค. 09:12","")}${tItem(1,"พัสดุรับเรื่อง","ธนกร พงษ์ไพบูลย์ · จนท.พัสดุ","1 ก.ค. 12:24","3 ชม. 12 น.")}</div>
-      <div>${tItem(1,"ดำเนินการจัดซื้อ","PO 6907-0142 · บ.เมดิคอล ซัพพลาย","2 ก.ค. 14:40","1 วัน 2 ชม.")}${tItem(0,"ตรวจรับสินค้า","กำลังดำเนินการ · คาดเสร็จ 5 ก.ค.","",  "ค้าง 4 ชม. 45 น.",true)}</div>
-    </div>
-  </div>`;
+  const latest=[...DB.prs].sort((a,b)=>new Date(b.at)-new Date(a.at))[0];
+  const pr=findPR(state.trackId)||latest;
+  const search='<div class="card" style="margin-bottom:16px;display:flex;gap:12px;flex-wrap:wrap;align-items:end">'+
+    '<div style="flex:2;min-width:200px"><label class="lbl">เลข PR ID</label><input class="in mono" id="trkIn" value="'+(pr?pr.id:"")+'" placeholder="PR-..."></div>'+
+    '<button class="btn btn-p" style="padding:11px 26px" onclick="doTrack()">ค้นหา</button></div>';
+  if(!pr) return search+'<div class="card" style="text-align:center;color:#8a9a92;padding:40px">ไม่พบเอกสาร</div>';
+  const t=totals(pr.items);
+  const STEPS=["สร้างคำขอ","พัสดุรับเรื่อง","อนุมัติ PO","ตรวจรับ","เสร็จสิ้น"];
+  const doneMap={"ยื่นเสนอซื้อ":1,"อยู่ระหว่างตรวจสอบ":2,"อนุมัติใบสั่งซื้อ":3,"ตรวจรับแล้ว":5,"ต้องการการแก้ไข":1,"ยกเลิก":0};
+  const done=doneMap[pr.status]??0;
+  const stepper='<div style="display:flex;align-items:flex-start;margin-bottom:24px;overflow-x:auto">'+STEPS.map((s,i)=>{
+    const isDone=i<done, isCur=i===done&&done<5;
+    const c=isDone?'<div style="width:32px;height:32px;border-radius:50%;background:#047857;color:#fff;display:flex;align-items:center;justify-content:center">✓</div>'
+      :isCur?'<div style="width:32px;height:32px;border-radius:50%;background:#fff;border:2px solid #d97706;color:#d97706;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 4px #fff3e2">'+(i+1)+'</div>'
+      :'<div style="width:32px;height:32px;border-radius:50%;background:#f0f3f1;border:2px solid #e8eeeb"></div>';
+    return '<div style="flex:1;min-width:70px;display:flex;flex-direction:column;align-items:center;text-align:center;position:relative">'+c+
+      (i<4?'<div style="position:absolute;top:16px;left:50%;width:100%;height:2px;background:'+(isDone?'#047857':'#e8eeeb')+'"></div>':'')+
+      '<div style="font-size:12px;font-weight:600;margin-top:9px;color:'+(isCur?'#d97706':isDone?'#12211b':'#a3b0a9')+'">'+s+'</div></div>';}).join("")+'</div>';
+  const tl=pr.log.map((e,i)=>{
+    const d=i>0?dur(new Date(e.at)-new Date(pr.log[i-1].at)):null;
+    return '<div style="display:flex;gap:14px"><div style="display:flex;flex-direction:column;align-items:center">'+
+    '<div style="width:26px;height:26px;border-radius:50%;background:#047857;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px">✓</div>'+
+    (i<pr.log.length-1||done<5?'<div style="width:2px;flex:1;background:#cfe9dd;margin:3px 0"></div>':'')+'</div>'+
+    '<div style="flex:1;padding-bottom:14px"><div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px"><b style="font-size:13.5px">'+e.t+'</b><span class="mono" style="font-size:11px;color:#8a9a92">'+fmtDT(e.at)+'</span></div>'+
+    '<div style="font-size:12px;color:#7d8d85;margin-top:3px">'+e.by+(e.note?' · '+e.note:'')+'</div>'+
+    (d?'<div style="display:inline-block;margin-top:6px;font-size:10.5px;color:#5b6b64;background:#eef4f1;padding:3px 8px;border-radius:6px">⏱ ใช้เวลา '+d+'</div>':'')+'</div></div>';}).join("");
+  const waiting=done<5&&pr.status!=="ต้องการการแก้ไข"?'<div style="display:flex;gap:14px"><div style="width:26px;height:26px;border-radius:50%;background:#fff;border:2px solid #d97706;box-shadow:0 0 0 3px #fff3e2"></div>'+
+    '<div style="flex:1"><b style="font-size:13.5px;color:#d97706">'+STEPS[done]+' (กำลังดำเนินการ)</b>'+
+    '<div style="display:inline-block;margin-left:8px;font-size:10.5px;color:#d97706;background:#fff3e2;padding:3px 8px;border-radius:6px">⏱ ค้างอยู่ '+dur(Date.now()-new Date(pr.log[pr.log.length-1].at))+'</div></div></div>':"";
+  const tot=dur(new Date(pr.log[pr.log.length-1].at)-new Date(pr.log[0].at));
+  return search+'<div class="card">'+
+    '<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;padding-bottom:16px;border-bottom:1px solid #eef4f1;margin-bottom:20px">'+
+    '<div><div class="mono" style="font-size:16px;font-weight:600;color:#047857">'+pr.id+'</div>'+
+    '<div style="font-size:13px;color:#3d4d45;margin-top:4px">'+pr.items[0].name+(pr.items.length>1?' และอีก '+(pr.items.length-1)+' รายการ':'')+' · '+pr.dept+' · '+fmtB(t.grand)+'</div>'+
+    '<div style="font-size:12px;color:#8a9a92;margin-top:2px">ผู้ขอ: '+pr.requester+' · '+pr.type+'</div></div>'+
+    '<div style="text-align:right">'+chip(pr.status)+
+    '<div style="font-size:12px;color:#8a9a92;margin-top:8px">เวลาดำเนินการรวม '+tot+'</div>'+
+    '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px;flex-wrap:wrap">'+
+    '<button class="btn btn-o" style="padding:6px 12px;font-size:11.5px" onclick="openDoc(\''+pr.id+'\')">🖨 ใบเสนอความต้องการซื้อ</button>'+
+    '<button class="btn btn-x" style="padding:6px 12px;font-size:11.5px" onclick="exportSAP(\''+pr.id+'\')">▤ ดึง Excel ทำ PR (SAP)</button></div></div></div>'+
+    stepper+'<div>'+tl+waiting+'</div></div>';
+}
+function doTrack(){
+  const v=document.getElementById("trkIn").value.trim();
+  const p=DB.prs.find(x=>x.id.toLowerCase()===v.toLowerCase());
+  if(p){ state.trackId=p.id; render(); }
+  else { state.trackId=null; content.querySelector(".card:last-child").outerHTML='<div class="card" style="text-align:center;color:#c0392b;padding:40px">ไม่พบเอกสาร "'+v+'"</div>'; }
 }
 
-/* ---------- A4 DOCUMENT ---------- */
-function openDoc(id){ state.screen="document"; document.getElementById("pageTitle").textContent="เอกสารใบเสนอความต้องการซื้อ"; document.querySelectorAll(".nav-item,.bn-item").forEach(b=>b.classList.remove("active")); toggleDrawer(false); render(); }
+/* ---------- Reports ---------- */
+function vReports(){
+  const rows=[...DB.prs].sort((a,b)=>new Date(b.at)-new Date(a.at)).map(p=>{
+    const tot=dur(new Date(p.log[p.log.length-1].at)-new Date(p.log[0].at));
+    return '<tr class="rowc" onclick="track(\''+p.id+'\')"><td class="mono">'+p.id+'</td><td style="color:#5b6b64">'+fmtD(p.at)+'</td><td>'+p.dept+'</td><td>'+p.type+'</td>'+
+    '<td style="text-align:right;font-weight:600">'+fmtB(totals(p.items).grand)+'</td><td>'+chip(p.status)+'</td><td style="text-align:center;color:#5b6b64">'+tot+'</td></tr>';}).join("");
+  const t=DB.prs.reduce((s,p)=>s+totals(p.items).grand,0);
+  return '<div style="display:flex;justify-content:flex-end;gap:10px;margin-bottom:14px;flex-wrap:wrap">'+
+    '<button class="btn btn-x" onclick="exportReport()">▤ Export Excel (รายงาน)</button>'+
+    '<button class="btn" style="background:#fdecea;border:1px solid #f3c9c4;color:#c0392b" onclick="window.print()">▦ พิมพ์ / PDF</button></div>'+
+    '<div class="grid k4" style="grid-template-columns:repeat(4,1fr);margin-bottom:14px">'+
+    '<div class="card"><div style="font-size:12px;color:#7d8d85">จำนวน PR</div><div style="font-size:20px;font-weight:700">'+DB.prs.length+'</div></div>'+
+    '<div class="card"><div style="font-size:12px;color:#7d8d85">มูลค่ารวม</div><div style="font-size:20px;font-weight:700;color:#047857">'+fmtB(t)+'</div></div>'+
+    '<div class="card"><div style="font-size:12px;color:#7d8d85">เสร็จสิ้น</div><div style="font-size:20px;font-weight:700">'+DB.prs.filter(p=>p.status==="ตรวจรับแล้ว").length+'</div></div>'+
+    '<div class="card"><div style="font-size:12px;color:#7d8d85">กำลังดำเนินการ</div><div style="font-size:20px;font-weight:700">'+DB.prs.filter(p=>!["ตรวจรับแล้ว","ยกเลิก"].includes(p.status)).length+'</div></div></div>'+
+    '<div class="tbl-wrap"><table><thead><tr><th>PR ID</th><th>วันที่</th><th>หน่วยงาน</th><th>ประเภท</th><th style="text-align:right">มูลค่า</th><th>สถานะ</th><th style="text-align:center">เวลาที่ใช้</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+}
+function exportReport(){
+  if(!window.XLSX)return;
+  const rows=DB.prs.map(p=>({"PR_ID":p.id,"วันที่":fmtD(p.at),"ผู้ขอซื้อ":p.requester,"หน่วยงาน":p.dept,"ประเภท":p.type,
+    "มูลค่ารวม":totals(p.items).grand,"สถานะ":p.status,"เลข PO":(p.po&&p.po.number)||"","ผู้ขาย":(p.po&&p.po.vendor)||""}));
+  const ws=XLSX.utils.json_to_sheet(rows), wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"Report"); XLSX.writeFile(wb,"PR_Report_"+new Date().toISOString().slice(0,10)+".xlsx");
+}
+
+/* ---------- Users (Admin) ---------- */
+function vUsers(){
+  const sc={Pending:["Pending","#b45309","#fff3e2"],Active:["Active","#047857","#e3f4ea"],Inactive:["Inactive","#6b7280","#f0f1f0"]};
+  const rows=DB.users.map(u=>{
+    const c=sc[u.status]||sc.Pending;
+    let act="—";
+    if(u.email!==USER.email){
+      if(u.status==="Pending") act='<button class="btn btn-p" style="padding:6px 13px;font-size:11.5px" onclick="setUser(\''+u.email+'\',\'Active\')">อนุมัติ</button>';
+      else if(u.status==="Active") act='<button class="btn btn-w" style="padding:6px 13px;font-size:11.5px" onclick="setUser(\''+u.email+'\',\'Inactive\')">ปิดใช้งาน</button>';
+      else act='<button class="btn" style="padding:6px 13px;font-size:11.5px;background:#e0f2fe;color:#0369a1" onclick="setUser(\''+u.email+'\',\'Active\')">เปิดใช้งาน</button>';
+    }
+    return '<tr '+(u.status==="Pending"?'style="background:#fffdf6"':'')+'><td class="mono" style="color:#3d4d45">'+u.email+'</td><td style="font-weight:500">'+u.name+'</td><td>'+u.dept+'</td><td>'+roleTH(u.role)+'</td>'+
+    '<td><span class="chip" style="color:'+c[1]+';background:'+c[2]+'">'+c[0]+'</span></td><td style="text-align:center">'+act+'</td></tr>';}).join("");
+  return '<div class="tbl-wrap"><table><thead><tr><th>ผู้ใช้ (อีเมล)</th><th>ชื่อ-สกุล</th><th>หน่วยงาน</th><th>บทบาท</th><th>สถานะ</th><th style="text-align:center">การจัดการ</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+}
+function setUser(email,status){
+  const u=DB.users.find(x=>x.email===email); if(!u)return;
+  u.status=status; saveDB(); syncRemote("setUserStatus",{userId:email,status}); buildNav(); render();
+}
+
+/* ---------- A4 Document ---------- */
+function openDoc(id){ state.docId=id; state.screen="document"; pageTitle.textContent="เอกสารใบเสนอความต้องการซื้อ";
+  document.querySelectorAll(".nav-item,.bn-item").forEach(b=>b.classList.remove("active")); toggleDrawer(false); render(); }
 function vDocument(){
-  const rows=DEMO_ITEMS.map((it,i)=>`<tr><td style="text-align:center">${i+1}</td><td>${it.name} (${it.no})</td><td style="text-align:center">${it.qty} ${it.uom}</td><td style="text-align:center">${it.qty} ${it.uom}</td><td style="text-align:right">${it.price.toLocaleString()}.00</td><td style="text-align:right">${(it.qty*it.price).toLocaleString()}.00</td></tr>`).join("");
-  return `
-  <div class="doc-tools no-print">
-    <button class="btn btn-o" onclick="go('tracking')">← กลับไปติดตามสถานะ</button>
-    <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-x" onclick="exportSAP()">▤ ดึง Excel ทำ PR (SAP)</button><button class="btn btn-p" onclick="window.print()">🖨 พิมพ์เอกสาร (A4)</button></div>
-  </div>
-  <div id="pr-doc"><div class="prdoc">
-    <div style="text-align:center;font-weight:700"><div style="font-size:20px;letter-spacing:.05em">T H <span style="color:#c0392b">▲</span> M C</div><div style="font-size:12px;color:#7a1f1f">ศูนย์การแพทย์ธรรมศาสตร์ · โรงพยาบาลธรรมศาสตร์เฉลิมพระเกียรติ</div><div style="font-size:11px;color:#444;font-weight:400">95 หมู่ 8 ถ.พหลโยธิน ต.คลองหนึ่ง อ.คลองหลวง จ.ปทุมธานี 12120 · โทร 0 2078 0050</div></div>
-    <div style="border-bottom:2px solid #7a1f1f;margin:6px 0 8px"></div>
-    <div style="display:flex;justify-content:space-between;align-items:flex-start">
-      <div style="display:flex;gap:10px"><div id="qrbox" style="width:70px;height:70px;border:1px solid #ddd;flex-shrink:0"></div><div style="font-size:12.5px;line-height:1.6;padding-top:2px"><div style="font-weight:700">ที่ PR-202607-0042</div><div>วันที่ 1 กรกฎาคม 2569</div></div></div>
-      <div style="border:1px solid #000;padding:6px 10px;font-size:11.5px;line-height:1.7;width:250px">แผนกจัดซื้อและคลังพัสดุ รับที่................<br>วันที่................ เวลา................</div>
-    </div>
-    <div style="text-align:center;font-size:17px;font-weight:700;margin:10px 0 4px">ใบเสนอความต้องการซื้อ/จ้าง/เช่า</div>
-    <div style="margin-top:6px">เรื่อง&nbsp;&nbsp;ขอเสนอความต้องการ <span style="border:1px solid #000;padding:0 4px;font-weight:700">✓ ซื้อ</span> ☐ จ้าง ☐ เช่า</div>
-    <div>เรียน&nbsp;&nbsp;หัวหน้าเจ้าหน้าที่พัสดุ (ผ่านงานจัดซื้อและคลังพัสดุ ฝ่ายการเงินและบัญชี)</div>
-    <div style="text-indent:36px;margin-top:6px">ด้วย <span class="dot" style="min-width:140px;text-align:center">ห้องผ่าตัด</span> โทร <span class="dot" style="min-width:100px;text-align:center">02-078-0055</span> มีความประสงค์ขอเสนอความต้องการ (ซื้อ) พัสดุ ตามรายการดังต่อไปนี้</div>
-    <table class="items" style="margin-top:8px"><thead><tr style="background:#f0f0f0;text-align:center"><th style="width:8%">ลำดับที่</th><th style="width:38%">รายการเสนอความต้องการ</th><th style="width:14%">อัตราการใช้ต่อเดือน</th><th style="width:9%">จำนวน</th><th style="width:15%">ราคาต่อหน่วย</th><th style="width:16%">ราคารวมทั้งสิ้น</th></tr></thead>
-    <tbody>${rows}
-      <tr><td style="height:22px">&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>
-      <tr><td colspan="4" rowspan="3" style="vertical-align:top;font-size:12px">หมายเหตุ : (ชี้แจงเหตุผลที่ต้องการซื้อ)<br>ทดแทนชุดเครื่องมือผ่าตัดที่ชำรุด เพื่อรองรับการผ่าตัดในไตรมาส 3</td><td>มูลค่าพัสดุ</td><td style="text-align:right">130,500.00</td></tr>
-      <tr><td>ภาษีมูลค่าเพิ่ม 7%</td><td style="text-align:right">9,135.00</td></tr>
-      <tr style="font-weight:700"><td>รวมเป็นเงินทั้งสิ้น</td><td style="text-align:right">139,635.00</td></tr>
-    </tbody></table>
-    <div style="margin-top:10px">และขอเสนอชื่อกรรมการตรวจรับดังนี้</div>
-    <div>1. <span class="dot" style="min-width:230px">นพ.ประสิทธิ์ วัฒนกุล</span> ประธานกรรมการ</div>
-    <div>2. <span class="dot" style="min-width:230px">สุนทรี ภักดี</span> กรรมการ</div>
-    <div>3. <span class="dot" style="min-width:230px">อนุชา ทองดี</span> กรรมการและเลขานุการ</div>
-    <div style="text-indent:36px;margin-top:8px">จึงเรียนมาเพื่อโปรดพิจารณาให้ดำเนินการจัดซื้อ/จ้าง ตามรายการดังกล่าวด้วย จักขอบพระคุณยิ่ง</div>
-    <div style="display:flex;justify-content:space-between;text-align:center;margin-top:26px;font-size:12.5px">
-      <div style="width:46%"><div>(ลงชื่อ)........................................ผู้เสนอความต้องการ</div><div style="margin-top:4px">( กมลวรรณ ศรีสุข )</div><div style="margin-top:4px">ตำแหน่ง : พยาบาลวิชาชีพ</div></div>
-      <div style="width:46%"><div>(ลงชื่อ)........................................หัวหน้างาน</div><div style="margin-top:4px">(........................................)</div><div style="margin-top:4px">ตำแหน่ง : ........................................</div></div>
-    </div>
-  </div></div>`;
+  const pr=findPR(state.docId); if(!pr) return '<div class="card">ไม่พบเอกสาร</div>';
+  const t=totals(pr.items);
+  const rows=pr.items.map((it,i)=>'<tr><td style="text-align:center">'+(i+1)+'</td><td>'+it.name+(it.code?' ('+it.code+')':'')+'</td>'+
+    '<td style="text-align:center">'+it.qty+' '+(it.unit||'')+'</td><td style="text-align:center">'+it.qty+' '+(it.unit||'')+'</td>'+
+    '<td style="text-align:right">'+money(it.price)+'</td><td style="text-align:right">'+money(it.qty*it.price)+'</td></tr>').join("");
+  const back=USER.role==="User"?"history":(ROLE_MENUS[USER.role].includes("approvals")?"approvals":"tracking");
+  const c=pr.committee||["","",""];
+  return '<div class="doc-tools no-print">'+
+    '<button class="btn btn-o" onclick="go(\''+back+'\')">← กลับ</button>'+
+    '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-x" onclick="exportSAP(\''+pr.id+'\')">▤ ดึง Excel ทำ PR (SAP)</button>'+
+    '<button class="btn btn-p" onclick="window.print()">🖨 พิมพ์เอกสาร (A4)</button></div></div>'+
+    '<div id="pr-doc"><div class="prdoc">'+
+    '<div style="text-align:center;font-weight:700"><div style="font-size:20px;letter-spacing:.05em">T H <span style="color:#c0392b">▲</span> M C</div>'+
+    '<div style="font-size:12px;color:#7a1f1f">ศูนย์การแพทย์ธรรมศาสตร์ · โรงพยาบาลธรรมศาสตร์เฉลิมพระเกียรติ</div>'+
+    '<div style="font-size:11px;color:#444;font-weight:400">95 หมู่ 8 ถ.พหลโยธิน ต.คลองหนึ่ง อ.คลองหลวง จ.ปทุมธานี 12120 · โทร 0 2078 0050</div></div>'+
+    '<div style="border-bottom:2px solid #7a1f1f;margin:6px 0 8px"></div>'+
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start">'+
+    '<div style="display:flex;gap:10px"><div id="qrbox" style="width:70px;height:70px;border:1px solid #ddd;flex-shrink:0"></div>'+
+    '<div style="font-size:12.5px;line-height:1.6;padding-top:2px"><div style="font-weight:700">ที่ '+pr.id+'</div><div>วันที่ '+fmtLong(pr.at)+'</div></div></div>'+
+    '<div style="border:1px solid #000;padding:6px 10px;font-size:11.5px;line-height:1.7;width:250px">แผนกจัดซื้อและคลังพัสดุ รับที่................<br>วันที่................ เวลา................</div></div>'+
+    '<div style="text-align:center;font-size:17px;font-weight:700;margin:10px 0 4px">ใบเสนอความต้องการซื้อ/จ้าง/เช่า</div>'+
+    '<div style="margin-top:6px">เรื่อง&nbsp;&nbsp;ขอเสนอความต้องการ <span style="border:1px solid #000;padding:0 4px;font-weight:700">✓ ซื้อ</span> ☐ จ้าง ☐ เช่า</div>'+
+    '<div>เรียน&nbsp;&nbsp;หัวหน้าเจ้าหน้าที่พัสดุ (ผ่านงานจัดซื้อและคลังพัสดุ ฝ่ายการเงินและบัญชี)</div>'+
+    '<div style="text-indent:36px;margin-top:6px">ด้วย <span class="dot" style="min-width:140px;text-align:center">'+pr.dept+'</span> โทร <span class="dot" style="min-width:100px;text-align:center">'+(pr.phone||"-")+'</span> มีความประสงค์ขอเสนอความต้องการ (ซื้อ) พัสดุ ตามรายการดังต่อไปนี้</div>'+
+    '<table class="items" style="margin-top:8px"><thead><tr style="background:#f0f0f0;text-align:center"><th style="width:8%">ลำดับที่</th><th style="width:38%">รายการเสนอความต้องการ</th><th style="width:14%">อัตราการใช้ต่อเดือน</th><th style="width:9%">จำนวน</th><th style="width:15%">ราคาต่อหน่วย</th><th style="width:16%">ราคารวมทั้งสิ้น</th></tr></thead><tbody>'+rows+
+    '<tr><td style="height:22px">&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>'+
+    '<tr><td colspan="4" rowspan="3" style="vertical-align:top;font-size:12px">หมายเหตุ : (ชี้แจงเหตุผลที่ต้องการซื้อ)<br>'+pr.reason+'</td><td>มูลค่าพัสดุ</td><td style="text-align:right">'+money(t.sub)+'</td></tr>'+
+    '<tr><td>ภาษีมูลค่าเพิ่ม 7%</td><td style="text-align:right">'+money(t.vat)+'</td></tr>'+
+    '<tr style="font-weight:700"><td>รวมเป็นเงินทั้งสิ้น</td><td style="text-align:right">'+money(t.grand)+'</td></tr></tbody></table>'+
+    '<div style="margin-top:10px">และขอเสนอชื่อกรรมการตรวจรับดังนี้</div>'+
+    '<div>1. <span class="dot" style="min-width:230px">'+(c[0]||"")+'</span> ประธานกรรมการ</div>'+
+    '<div>2. <span class="dot" style="min-width:230px">'+(c[1]||"")+'</span> กรรมการ</div>'+
+    '<div>3. <span class="dot" style="min-width:230px">'+(c[2]||"")+'</span> กรรมการและเลขานุการ</div>'+
+    '<div style="text-indent:36px;margin-top:8px">จึงเรียนมาเพื่อโปรดพิจารณาให้ดำเนินการจัดซื้อ/จ้าง ตามรายการดังกล่าวด้วย จักขอบพระคุณยิ่ง</div>'+
+    '<div style="display:flex;justify-content:space-between;text-align:center;margin-top:26px;font-size:12.5px">'+
+    '<div style="width:46%"><div>(ลงชื่อ)........................................ผู้เสนอความต้องการ</div><div style="margin-top:4px">( '+pr.requester+' )</div><div style="margin-top:4px">ตำแหน่ง : '+(USER.pos||"........................................")+'</div></div>'+
+    '<div style="width:46%"><div>(ลงชื่อ)........................................หัวหน้างาน</div><div style="margin-top:4px">(........................................)</div><div style="margin-top:4px">ตำแหน่ง : ........................................</div></div></div>'+
+    '</div></div>';
 }
 function drawQR(){
-  try{ const q=qrcode(0,"M"); q.addData("PR-202607-0042"); q.make();
-    const box=document.getElementById("qrbox"); if(box) box.innerHTML=q.createImgTag(3,4);
-    const img=box&&box.querySelector("img"); if(img){img.style.width="100%";img.style.height="100%";img.style.imageRendering="pixelated";}
+  try{ const pr=findPR(state.docId); if(!pr)return;
+    const q=qrcode(0,"M"); q.addData(pr.id); q.make();
+    const box=document.getElementById("qrbox"); if(box){ box.innerHTML=q.createImgTag(3,4);
+      const img=box.querySelector("img"); if(img){img.style.width="100%";img.style.height="100%";img.style.imageRendering="pixelated";} }
   }catch(e){}
 }
 
-/* ---------- SAP EXCEL EXPORT ---------- */
-function exportSAP(){
+/* ---------- SAP Excel export (จากข้อมูลจริงของ PR) ---------- */
+function exportSAP(id){
   if(!window.XLSX){ alert("กำลังโหลดไลบรารี กรุณาลองอีกครั้ง"); return; }
+  const pr=findPR(id); if(!pr) return;
   const headers=["Type","Item No.","Item Description","Item Details","Vendor","Required Date","Required Qty.","UoM Group","UoM Code","UoM Name","Info Price","Gross Price","Discount %","Tax Code","Total (LC)","Whse","Project","Business Type","Department"];
-  const rows=DEMO_ITEMS.map(it=>({
-    "Type":"","Item No.":it.no,"Item Description":it.name,"Item Details":"","Vendor":"VT00170",
-    "Required Date":"05.07.26","Required Qty.":it.qty,"UoM Group":it.uom,"UoM Code":it.uom,"UoM Name":it.uom,
+  const rd=new Date(Date.now()+2*86400e3);
+  const rds=String(rd.getDate()).padStart(2,"0")+"."+String(rd.getMonth()+1).padStart(2,"0")+"."+String(rd.getFullYear()).slice(2);
+  const rows=pr.items.map(it=>({
+    "Type":"","Item No.":it.code||"","Item Description":it.name,"Item Details":"","Vendor":(pr.po&&pr.po.vendor)||"",
+    "Required Date":rds,"Required Qty.":it.qty,"UoM Group":it.unit||"","UoM Code":it.unit||"","UoM Name":it.unit||"",
     "Info Price":it.price,"Gross Price":it.price,"Discount %":0,"Tax Code":"IEH07",
-    "Total (LC)":"THB "+(it.qty*it.price).toLocaleString("en-US",{minimumFractionDigits:2}),
-    "Whse":"17CMS","Project":"","Business Type":"17","Department":"17CMS"
+    "Total (LC)":"THB "+Number(it.qty*it.price).toLocaleString("en-US",{minimumFractionDigits:2}),
+    "Whse":pr.dept,"Project":"","Business Type":"","Department":pr.dept
   }));
   const ws=XLSX.utils.json_to_sheet(rows,{header:headers});
   const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"PR");
-  XLSX.writeFile(wb,"PR-202607-0042_SAP.xlsx");
+  XLSX.writeFile(wb,pr.id+"_SAP.xlsx");
 }
 
 /* ---------- BOOT ---------- */
-buildNav();
-if(!DEMO) document.getElementById("demoChip").classList.add("hidden");
+if(CONFIG.WEB_APP_URL) demoChip.classList.add("hidden");
 showAuth("login");
 </script>
 </body>
