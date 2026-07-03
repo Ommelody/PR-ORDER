@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>THAMC PR ORDER</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{
+  --green:#047857; --green-d:#064e3b; --green-m:#059669; --green-soft:#e3f4ea;
+  --ink:#12211b; --muted:#5b6b64; --line:#e8eeeb; --bg:#f4f8f6; --card:#fff;
+  --amber:#b45309; --amber-bg:#fff3e2; --sidebar-w:240px; --sidebar-wc:74px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{font-family:'Sarabun',system-ui,sans-serif;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased}
+.mono{font-family:'IBM Plex Mono',monospace}
+button{font-family:inherit;cursor:pointer;border:0;background:none}
+.hidden{display:none!important}
+a{color:inherit}
+
+/* ---------- AUTH ---------- */
+#auth{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:22px;background:linear-gradient(135deg,#064e3b,#0b6b4a 55%,#059669)}
+.auth-card{width:100%;max-width:410px;background:rgba(255,255,255,.07);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.16);border-radius:22px;padding:34px 32px;box-shadow:0 30px 60px -20px rgba(0,0,0,.4)}
+.auth-logo{width:58px;height:58px;border-radius:16px;background:#fff;margin:0 auto;display:flex;align-items:center;justify-content:center;color:#064e3b;font-weight:700;font-size:20px}
+.auth-card h1{color:#fff;font-size:23px;font-weight:700;text-align:center;margin:14px 0 2px}
+.auth-sub{color:#9fe7c4;font-size:13px;text-align:center;margin-bottom:26px}
+.auth-lbl{color:#9fe7c4;font-size:12.5px;margin-bottom:6px;display:block}
+.auth-in{width:100%;background:transparent;border:0;border-bottom:2px solid rgba(255,255,255,.35);padding:9px 2px;color:#fff;font-size:14px;outline:none}
+.auth-in::placeholder{color:rgba(255,255,255,.5)}
+.auth-in:focus{border-color:#fff}
+.auth-btn{width:100%;margin-top:18px;background:#facc15;color:#1a1a1a;font-weight:700;font-size:16px;padding:13px;border-radius:14px;box-shadow:0 8px 20px -8px rgba(250,204,21,.6)}
+.auth-link{text-align:center;margin-top:20px;color:#9fe7c4;font-size:13px}
+.auth-link b{color:#fff;cursor:pointer;text-decoration:underline}
+.auth-msg{text-align:center;font-size:13px;margin-top:14px;min-height:18px}
+
+/* ---------- SHELL ---------- */
+#app{display:flex;height:100dvh;overflow:hidden}
+.sidebar{width:var(--sidebar-w);flex-shrink:0;background:var(--green-d);color:#c9ede0;padding:18px 14px;display:flex;flex-direction:column;transition:width .22s ease}
+body.collapsed .sidebar{width:var(--sidebar-wc)}
+.sb-head{display:flex;align-items:center;gap:11px;padding:4px 6px 18px;border-bottom:1px solid rgba(255,255,255,.1);min-height:56px}
+.sb-logo{width:38px;height:38px;border-radius:11px;background:var(--green-m);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:15px;flex-shrink:0}
+.sb-title{line-height:1.1;overflow:hidden;white-space:nowrap}
+.sb-title b{color:#fff;font-weight:700;font-size:15px;display:block}
+.sb-title span{font-size:10.5px;color:#8fe3bb}
+body.collapsed .sb-title,body.collapsed .nav-label,body.collapsed .nav-badge,body.collapsed .sb-user-info{display:none}
+.sb-nav{display:flex;flex-direction:column;gap:3px;margin-top:14px;flex:1;overflow-y:auto}
+.nav-item{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:10px;font-size:13.5px;color:#c9ede0;white-space:nowrap;transition:background .15s}
+.nav-item:hover{background:rgba(255,255,255,.08)}
+.nav-item.active{background:var(--green-m);color:#fff;font-weight:600}
+.nav-ic{width:20px;text-align:center;flex-shrink:0;font-size:15px}
+.nav-badge{margin-left:auto;background:#d97706;color:#fff;font-size:10.5px;font-weight:600;padding:1px 7px;border-radius:10px}
+body.collapsed .nav-item{justify-content:center;padding:11px 0}
+.sb-logout{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:11px;background:rgba(220,38,38,.22);color:#fecaca;font-size:13px;margin-bottom:8px;white-space:nowrap}
+body.collapsed .sb-logout{justify-content:center}
+.sb-user{display:flex;align-items:center;gap:11px;padding:10px;border-radius:11px;background:rgba(255,255,255,.06)}
+.sb-ava{width:34px;height:34px;border-radius:50%;background:#8fd3b4;color:#064e3b;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}
+.sb-user-info{min-width:0;overflow:hidden}
+.sb-user-info b{color:#fff;font-size:13px;font-weight:600;display:block;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+.sb-user-info span{font-size:11px;color:#8fe3bb}
+
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 22px;background:#fff;border-bottom:1px solid var(--line);flex-shrink:0}
+.tb-left{display:flex;align-items:center;gap:14px;min-width:0}
+.icon-btn{width:38px;height:38px;border-radius:10px;color:var(--muted);font-size:18px;display:flex;align-items:center;justify-content:center}
+.icon-btn:hover{background:var(--bg)}
+.tb-title{font-size:18px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb-right{display:flex;align-items:center;gap:12px}
+.tb-search{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 13px;width:210px;color:#a3b0a9;font-size:12.5px}
+.tb-bell{position:relative;color:var(--muted);font-size:17px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;border-radius:10px}
+.tb-bell .dot{position:absolute;top:8px;right:9px;width:8px;height:8px;background:#ef4444;border-radius:50%;border:1.5px solid #fff}
+.tb-ava{width:36px;height:36px;border-radius:50%;background:var(--green-d);color:#dcfbe9;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px}
+.content{flex:1;overflow-y:auto;padding:22px;-webkit-overflow-scrolling:touch}
+
+/* cards / bits */
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+.grid{display:grid;gap:14px}
+.kpi{background:#fff;border-radius:14px;padding:15px 17px;box-shadow:0 10px 24px -14px rgba(6,78,59,.4)}
+.kpi .l{font-size:12px;color:#7d8d85}
+.kpi .v{font-size:24px;font-weight:700;margin-top:2px}
+.bar{height:4px;background:#eef4f1;border-radius:2px;margin-top:9px;overflow:hidden}
+.bar>i{display:block;height:4px;border-radius:2px}
+.btn{font-size:13px;font-weight:600;padding:9px 18px;border-radius:9px}
+.btn-p{background:var(--green);color:#fff}
+.btn-o{background:#fff;border:1px solid #cdd9d3;color:var(--muted)}
+.btn-x{background:var(--green-soft);border:1px solid #b9e3ca;color:#0a6b3c}
+.chip{font-size:11px;padding:3px 9px;border-radius:12px;font-weight:600;display:inline-block}
+.chip-a{color:var(--amber);background:var(--amber-bg)}
+.chip-g{color:var(--green);background:var(--green-soft)}
+.chip-b{color:#059669;background:#e6f6ef}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+thead tr{background:var(--bg);color:var(--muted);text-align:left}
+th{padding:12px 14px;font-weight:600}
+td{padding:12px 14px;border-top:1px solid #eef4f1}
+.tbl-wrap{overflow-x:auto;background:#fff;border:1px solid var(--line);border-radius:14px}
+.rowc{cursor:pointer}.rowc:hover{background:#f7fbf9}
+.demo-chip{position:fixed;bottom:14px;right:14px;z-index:60;background:#fffbe6;border:1px solid #f5e2a8;color:#8a6d00;font-size:11.5px;padding:7px 12px;border-radius:20px;box-shadow:0 4px 14px rgba(0,0,0,.1)}
+
+/* mobile drawer + bottom nav (hidden on desktop) */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:45;opacity:0;pointer-events:none;transition:opacity .2s}
+.scrim.show{opacity:1;pointer-events:auto}
+.bottomnav{display:none}
+
+/* ---------- A4 DOC ---------- */
+.doc-tools{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:0 auto 14px;max-width:210mm}
+.prdoc{width:210mm;max-width:100%;min-height:297mm;background:#fff;margin:0 auto;padding:12mm 14mm;box-shadow:0 4px 24px rgba(0,0,0,.12);color:#000;font-size:13.5px;line-height:1.55}
+.prdoc .items{width:100%;border-collapse:collapse}
+.prdoc .items th,.prdoc .items td{border:1px solid #000;padding:5px 7px;font-size:12.5px;vertical-align:top}
+.dot{border-bottom:1px dotted #000;display:inline-block;min-width:60px}
+
+@media (max-width:820px){
+  .sidebar{position:fixed;left:0;top:0;bottom:0;z-index:50;transform:translateX(-100%);transition:transform .24s ease;width:var(--sidebar-w)!important}
+  body.drawer .sidebar{transform:translateX(0)}
+  body.collapsed .sidebar{width:var(--sidebar-w)!important}
+  body.collapsed .sb-title,body.collapsed .nav-label,body.collapsed .nav-badge,body.collapsed .sb-user-info{display:revert}
+  body.collapsed .nav-item{justify-content:flex-start;padding:11px 12px}
+  .collapse-btn{display:none}
+  .tb-search{display:none}
+  .content{padding:16px 14px 84px}
+  .grid.k4{grid-template-columns:1fr 1fr!important}
+  .grid.c2,.grid.c3{grid-template-columns:1fr!important}
+  .prdoc{padding:8mm}
+  .bottomnav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:40;background:#fff;border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom));justify-content:space-around;box-shadow:0 -4px 16px rgba(0,0,0,.05)}
+  .bn-item{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10.5px;color:#8a9a92;padding:4px 8px;border-radius:10px;flex:1}
+  .bn-item .i{font-size:18px}
+  .bn-item.active{color:var(--green)}
+  .hamb{display:flex!important}
+}
+@media (min-width:821px){ .hamb{display:none} .scrim{display:none} }
+
+@media print{
+  @page{size:A4;margin:0}
+  body *{visibility:hidden!important}
+  #pr-doc,#pr-doc *{visibility:visible!important}
+  #pr-doc{position:fixed;left:0;top:0;margin:0!important}
+  .prdoc{box-shadow:none!important;margin:0!important}
+  .no-print{display:none!important}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ AUTH ============ -->
+<div id="auth">
+  <div class="auth-card" id="loginCard">
+    <div class="auth-logo">PR</div>
+    <h1>THAMC PR ORDER</h1>
+    <div class="auth-sub">ระบบเสนอความต้องการซื้อ · ศูนย์จัดซื้อและคลังพัสดุ</div>
+    <label class="auth-lbl">ชื่อผู้ใช้ (อีเมล)</label>
+    <input class="auth-in" id="liEmail" type="email" placeholder="email@thamc.go.th" value="thanakorn@thamc.go.th">
+    <label class="auth-lbl" style="margin-top:16px">รหัสผ่าน</label>
+    <input class="auth-in" id="liPass" type="password" placeholder="••••••••" value="demo">
+    <button class="auth-btn" onclick="doLogin()">เข้าสู่ระบบ</button>
+    <div class="auth-msg" id="liMsg"></div>
+    <div class="auth-link">ยังไม่มีบัญชี? <b onclick="showAuth('register')">ลงทะเบียนที่นี่</b></div>
+  </div>
+
+  <div class="auth-card hidden" id="registerCard">
+    <h1 style="margin-top:0">ลงทะเบียนผู้ใช้งาน</h1>
+    <div class="grid" style="grid-template-columns:1fr 1fr;gap:14px">
+      <div><label class="auth-lbl">ชื่อ-สกุล</label><input class="auth-in" id="rgName"></div>
+      <div><label class="auth-lbl">ตำแหน่ง</label><input class="auth-in" id="rgPos"></div>
+      <div style="grid-column:span 2"><label class="auth-lbl">อีเมล</label><input class="auth-in" id="rgEmail" type="email"></div>
+      <div><label class="auth-lbl">เบอร์หน่วยงาน</label><input class="auth-in" id="rgPhone"></div>
+      <div><label class="auth-lbl">หน่วยงาน</label><input class="auth-in" id="rgDept"></div>
+      <div style="grid-column:span 2"><label class="auth-lbl">รหัสผ่าน</label><input class="auth-in" id="rgPass" type="password"></div>
+    </div>
+    <button class="auth-btn" onclick="doRegister()">ลงทะเบียน</button>
+    <div class="auth-msg" id="rgMsg"></div>
+    <div class="auth-link">มีบัญชีอยู่แล้ว? <b onclick="showAuth('login')">กลับไปเข้าสู่ระบบ</b></div>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app" class="hidden">
+  <aside class="sidebar">
+    <div class="sb-head">
+      <div class="sb-logo">PR</div>
+      <div class="sb-title"><b>PR ORDER</b><span class="mono">THAMC Supply</span></div>
+    </div>
+    <nav class="sb-nav" id="navList"></nav>
+    <button class="sb-logout" onclick="logout()"><span class="nav-ic">⤶</span><span class="nav-label">ออกจากระบบ</span></button>
+    <div class="sb-user"><div class="sb-ava" id="sbAva">สว</div><div class="sb-user-info"><b id="sbName">สวรินทร์ ผู้บริหาร</b><span id="sbRole">Admin</span></div></div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="tb-left">
+        <button class="icon-btn hamb" onclick="toggleDrawer()" style="display:none">☰</button>
+        <button class="icon-btn collapse-btn" onclick="toggleCollapse()" title="ยืด/หดเมนู">⇄</button>
+        <div class="tb-title" id="pageTitle">ภาพรวมระบบจัดซื้อ</div>
+      </div>
+      <div class="tb-right">
+        <div class="tb-search">⌕ ค้นหาเลข PR...</div>
+        <button class="tb-bell">♪<span class="dot"></span></button>
+        <div class="tb-ava" id="tbAva">สว</div>
+      </div>
+    </div>
+    <div class="content" id="content"></div>
+  </div>
+</div>
+
+<div class="scrim" id="scrim" onclick="toggleDrawer(false)"></div>
+<nav class="bottomnav" id="bottomNav"></nav>
+<div class="demo-chip" id="demoChip">โหมดสาธิต (Demo) · ยังไม่ได้ต่อ Backend</div>
+
+<script>
+/* =========================================================
+   CONFIG — วางลิงก์ Web App จาก Apps Script ที่นี่
+   ========================================================= */
+const CONFIG = {
+  WEB_APP_URL: "",        // <-- ใส่ URL ของ Apps Script Web App (ลงท้าย /exec) แล้ว Demo จะปิดอัตโนมัติ
+};
+const DEMO = !CONFIG.WEB_APP_URL;
+
+/* ---------- API layer (fetch → Apps Script) ---------- */
+async function api(action, args){
+  if(DEMO) return demoApi(action, args);
+  const res = await fetch(CONFIG.WEB_APP_URL, {
+    method:"POST",
+    headers:{"Content-Type":"text/plain;charset=utf-8"}, // simple request → เลี่ยง CORS preflight
+    body: JSON.stringify({action, args})
+  });
+  const data = await res.json();
+  if(data && data.error) throw new Error(data.error);
+  return data;
+}
+
+/* =========================================================
+   DEMO DATA — ข้อมูลตัวอย่าง (ตรงกับ prototype)
+   ========================================================= */
+const DEMO_PRS = [
+  {id:"PR-202607-0042",date:"1 ก.ค. 69",requester:"กมลวรรณ ศรีสุข",dept:"ห้องผ่าตัด",type:"วัสดุการแพทย์",value:139635,status:"รอตรวจรับ",dur:"2 วัน 10 ชม.",mine:true},
+  {id:"PR-202607-0041",date:"1 ก.ค. 69",requester:"วิไล จันทร์เพ็ญ",dept:"เภสัชกรรม",type:"เวชภัณฑ์",value:86400,status:"รอรับเรื่อง",dur:"—"},
+  {id:"PR-202606-0388",date:"30 มิ.ย. 69",requester:"อนุชา ทองดี",dept:"ห้องปฏิบัติการ",type:"วัสดุการแพทย์",value:54200,status:"รอรับเรื่อง",dur:"—"},
+  {id:"PR-202607-0038",date:"30 มิ.ย. 69",requester:"ศิริพร มั่นคง",dept:"เภสัชกรรม",type:"เวชภัณฑ์",value:420000,status:"เสร็จสิ้น",dur:"3 วัน 04 ชม."},
+  {id:"PR-202606-0391",date:"26 มิ.ย. 69",requester:"ปรีชา ยั่งยืน",dept:"ห้องปฏิบัติการ",type:"วัสดุการแพทย์",value:215800,status:"จัดซื้อ",dur:"5 วัน 02 ชม."}
+];
+const DEMO_ITEMS = [
+  {no:"MED-0231",name:"ชุดเครื่องมือผ่าตัดพื้นฐาน",qty:2,uom:"ชุด",price:45000},
+  {no:"MED-0248",name:"กรรไกรผ่าตัด Metzenbaum",qty:6,uom:"อัน",price:6750}
+];
+function demoApi(action,args){
+  const map = {
+    login:{success:true,user:{FullName:"สวรินทร์ ผู้บริหาร",Role:"Admin",Department:"บริหาร"}},
+    register:{success:true,message:"ลงทะเบียนสำเร็จ (สาธิต) — โปรดรอผู้ดูแลอนุมัติ"},
+    dashboard:{success:true,pendingCount:61,pendingValue:1870000,approvedMonthCount:186,total:24812600,avg:"2.4"},
+    listPRs:{success:true,data:DEMO_PRS},
+    getPR:{success:true,items:DEMO_ITEMS}
+  };
+  return Promise.resolve(map[action] || {success:true});
+}
+
+/* =========================================================
+   STATE + NAV
+   ========================================================= */
+const MENU = [
+  {k:"dashboard",ic:"◱",t:"ภาพรวม",title:"ภาพรวมระบบจัดซื้อ"},
+  {k:"newpr",ic:"＋",t:"สร้างใบขอซื้อ",title:"สร้างใบขอซื้อ"},
+  {k:"approvals",ic:"☰",t:"รายการรอตรวจสอบ",title:"รายการรอตรวจสอบ",badge:"12"},
+  {k:"tracking",ic:"◷",t:"ติดตามสถานะ",title:"ติดตามสถานะเอกสาร"},
+  {k:"reports",ic:"▤",t:"รายงาน",title:"รายงาน"},
+  {k:"users",ic:"◎",t:"จัดการผู้ใช้งาน",title:"จัดการผู้ใช้งาน"}
+];
+const MOBILE_MENU = ["dashboard","newpr","approvals","tracking","reports"];
+let state = { screen:"dashboard", user:null };
+
+function fmt(n){return "฿"+Number(n).toLocaleString("th-TH");}
+function statusChip(s){
+  const m={"รอตรวจรับ":"chip-a","รอรับเรื่อง":"chip-a","เสร็จสิ้น":"chip-g","จัดซื้อ":"chip-b"};
+  return `<span class="chip ${m[s]||'chip-a'}">${s}</span>`;
+}
+
+function buildNav(){
+  document.getElementById("navList").innerHTML = MENU.map(m=>
+    `<button class="nav-item" data-k="${m.k}" onclick="go('${m.k}')">
+       <span class="nav-ic">${m.ic}</span><span class="nav-label">${m.t}</span>
+       ${m.badge?`<span class="nav-badge">${m.badge}</span>`:""}
+     </button>`).join("");
+  document.getElementById("bottomNav").innerHTML = MOBILE_MENU.map(k=>{
+    const m=MENU.find(x=>x.k===k);
+    return `<button class="bn-item" data-k="${k}" onclick="go('${k}')"><span class="i">${m.ic}</span>${m.t.replace("รายการรอตรวจสอบ","รอตรวจ").replace("สร้างใบขอซื้อ","สร้าง")}</button>`;
+  }).join("");
+}
+function go(k){
+  state.screen=k;
+  const m=MENU.find(x=>x.k===k)||{title:""};
+  document.getElementById("pageTitle").textContent=m.title;
+  document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.k===k));
+  document.querySelectorAll(".bn-item").forEach(b=>b.classList.toggle("active",b.dataset.k===k));
+  toggleDrawer(false);
+  render();
+}
+function toggleCollapse(){ document.body.classList.toggle("collapsed"); }
+function toggleDrawer(force){
+  const on = force===undefined ? !document.body.classList.contains("drawer") : force;
+  document.body.classList.toggle("drawer",on);
+  document.getElementById("scrim").classList.toggle("show",on);
+}
+
+/* =========================================================
+   AUTH
+   ========================================================= */
+function showAuth(which){
+  document.getElementById("loginCard").classList.toggle("hidden",which!=="login");
+  document.getElementById("registerCard").classList.toggle("hidden",which!=="register");
+}
+async function doLogin(){
+  const email=document.getElementById("liEmail").value, pass=document.getElementById("liPass").value;
+  const msg=document.getElementById("liMsg"); msg.style.color="#fecaca"; msg.textContent="";
+  try{
+    const r=await api("login",{email,password:pass});
+    if(r.success && r.user){ state.user=r.user; enterApp(); }
+    else msg.textContent=r.message||r.error||"เข้าสู่ระบบไม่สำเร็จ";
+  }catch(e){ msg.textContent="เกิดข้อผิดพลาด: "+e.message; }
+}
+async function doRegister(){
+  const msg=document.getElementById("rgMsg");
+  const payload={name:rgName.value,position:rgPos.value,email:rgEmail.value,departmentPhone:rgPhone.value,department:rgDept.value,password:rgPass.value};
+  try{ const r=await api("register",payload); msg.style.color=r.success?"#bbf7d0":"#fecaca"; msg.textContent=r.message; if(r.success) setTimeout(()=>showAuth("login"),2500); }
+  catch(e){ msg.style.color="#fecaca"; msg.textContent=e.message; }
+}
+function enterApp(){
+  document.getElementById("auth").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");
+  const u=state.user||{};
+  const initials=(u.FullName||"ผู้ใช้").trim().slice(0,2);
+  sbName.textContent=u.FullName||"ผู้ใช้"; sbRole.textContent=u.Role||"User";
+  sbAva.textContent=initials; tbAva.textContent=initials;
+  go("dashboard");
+}
+function logout(){ state.user=null; document.getElementById("app").classList.add("hidden"); document.getElementById("auth").classList.remove("hidden"); showAuth("login"); }
+
+/* =========================================================
+   SCREENS
+   ========================================================= */
+function render(){
+  const c=document.getElementById("content");
+  const f={dashboard:vDashboard,newpr:vNewPr,approvals:vApprovals,tracking:vTracking,reports:vReports,users:vUsers,document:vDocument}[state.screen];
+  c.innerHTML = f ? f() : "";
+  if(state.screen==="document") drawQR();
+}
+
+function vDashboard(){
+  const recent = DEMO_PRS.slice(0,4).map(p=>
+    `<div class="rowc" style="display:flex;align-items:center;gap:12px;padding:10px;border:1px solid #eef4f1;border-radius:10px" onclick="go('tracking')">
+       <div style="flex:1"><div class="mono" style="font-size:12.5px;font-weight:600">${p.id}</div><div style="font-size:11.5px;color:#8a9a92">${p.type} · ${fmt(p.value)}</div></div>${statusChip(p.status)}
+     </div>`).join("");
+  return `
+  <div style="background:linear-gradient(135deg,#064e3b,#0b6b4a);border-radius:16px;padding:22px 24px 56px;color:#fff">
+    <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div><div class="mono" style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#8fe3bb;font-weight:600">Fiscal Year 2569</div>
+        <div style="font-size:14px;color:#a7ecca;margin-top:8px">มูลค่าขอซื้อสะสมทั้งปี</div><div style="font-size:28px;font-weight:700">฿24,812,600</div></div>
+      <div style="text-align:right;font-size:12.5px;color:#a7ecca">อัปเดต 3 ก.ค. 2569<br><span style="color:#8fe3bb">เวลาดำเนินการเฉลี่ย 2.4 วัน ▼</span></div>
+    </div>
+  </div>
+  <div class="grid k4" style="grid-template-columns:repeat(4,1fr);margin:-40px 6px 16px">
+    <div class="kpi"><div class="l">PR ทั้งหมด</div><div class="v">1,248</div><div class="bar"><i style="width:100%;background:#064e3b"></i></div></div>
+    <div class="kpi"><div class="l">รออนุมัติ</div><div class="v" style="color:#b45309">61</div><div class="bar"><i style="width:38%;background:#d97706"></i></div></div>
+    <div class="kpi"><div class="l">อยู่ระหว่างจัดซื้อ</div><div class="v">24</div><div class="bar"><i style="width:24%;background:#34a67d"></i></div></div>
+    <div class="kpi"><div class="l">เสร็จสิ้น (เดือนนี้)</div><div class="v" style="color:#047857">186</div><div class="bar"><i style="width:92%;background:#047857"></i></div></div>
+  </div>
+  <div class="grid c2" style="grid-template-columns:1.35fr 1fr">
+    <div class="card">
+      <div style="font-size:14px;font-weight:600;margin-bottom:16px">จำนวน PR รายเดือน</div>
+      <div style="display:flex;align-items:flex-end;gap:14px;height:130px">
+        ${[52,64,56,72,108,60].map((h,i)=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px"><div style="width:100%;height:${h}px;background:${i===4?'#047857':'#bfe3d2'};border-radius:4px 4px 0 0"></div><div style="font-size:11px;color:#7d8d85">${['ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.'][i]}</div></div>`).join("")}
+      </div>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div style="font-size:14px;font-weight:600">PR ล่าสุดที่ติดตาม</div><span style="font-size:12px;color:#047857;font-weight:600;cursor:pointer" onclick="go('tracking')">ดูทั้งหมด →</span></div>
+      <div style="display:flex;flex-direction:column;gap:10px">${recent}</div>
+    </div>
+  </div>`;
+}
+
+function vApprovals(){
+  const rows=DEMO_PRS.filter(p=>p.status==="รอรับเรื่อง"||p.mine).map(p=>
+    `<tr class="rowc" ${p.mine?'style="background:#fffdf6"':''} onclick="openDoc('${p.id}')">
+      <td><div class="mono" style="font-weight:600">${p.id}</div><div style="font-size:11px;color:#8a9a92">${p.date}</div></td>
+      <td><div style="font-weight:500">${p.requester} ${p.mine?'<span class="chip" style="background:#d97706;color:#fff">งานของคุณ</span>':''}</div><div style="font-size:11px;color:#8a9a92">${p.dept}</div></td>
+      <td>${p.type}</td><td style="text-align:right;font-weight:600">${fmt(p.value)}</td>
+      <td style="text-align:center"><div style="display:flex;gap:6px;justify-content:center"><button class="btn btn-p" style="padding:6px 12px;font-size:11.5px" onclick="event.stopPropagation();openDoc('${p.id}')">รับเรื่อง</button><button class="btn" style="padding:6px 11px;font-size:11.5px;background:#fff3e2;color:#d97706" onclick="event.stopPropagation()">Reject</button></div></td>
+    </tr>`).join("");
+  return `
+  <div class="grid c3" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px">
+    <div class="card"><div class="l" style="font-size:12px;color:#7d8d85">งานของคุณ</div><div style="font-size:22px;font-weight:700;color:#d97706">5</div></div>
+    <div class="card"><div class="l" style="font-size:12px;color:#7d8d85">ยังไม่มีผู้รับเรื่อง</div><div style="font-size:22px;font-weight:700">7</div></div>
+    <div class="card"><div class="l" style="font-size:12px;color:#7d8d85">มูลค่ารวมที่รอ</div><div style="font-size:22px;font-weight:700">฿1.87M</div></div>
+  </div>
+  <div class="tbl-wrap"><table><thead><tr><th>PR ID</th><th>ผู้ขอซื้อ</th><th>ประเภท</th><th style="text-align:right">มูลค่า</th><th style="text-align:center">ดำเนินการ</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+
+function vReports(){
+  const rows=DEMO_PRS.map(p=>
+    `<tr class="rowc" onclick="go('tracking')"><td class="mono">${p.id}</td><td style="color:#5b6b64">${p.date}</td><td>${p.dept}</td><td>${p.type}</td><td style="text-align:right;font-weight:600">${fmt(p.value)}</td><td>${statusChip(p.status)}</td><td style="text-align:center;color:#5b6b64">${p.dur}</td></tr>`).join("");
+  return `
+  <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">
+    <div style="display:flex;gap:8px"><span class="btn btn-p">รายงานภาพรวม</span><span class="btn btn-o">ตามรายการ</span></div>
+    <div style="display:flex;gap:10px"><button class="btn btn-x" onclick="exportSAP()">▤ Export Excel</button><button class="btn" style="background:#fdecea;border:1px solid #f3c9c4;color:#c0392b" onclick="window.print()">▦ Export PDF</button></div>
+  </div>
+  <div class="grid c4" style="grid-template-columns:repeat(4,1fr);margin-bottom:14px">
+    <div class="card"><div class="l" style="font-size:12px;color:#7d8d85">จำนวนที่พบ</div><div style="font-size:20px;font-weight:700">1,248</div></div>
+    <div class="card"><div class="l" style="font-size:12px;color:#7d8d85">มูลค่ารวม</div><div style="font-size:20px;font-weight:700;color:#047857">฿24.8M</div></div>
+    <div class="card"><div class="l" style="font-size:12px;color:#7d8d85">เสร็จสิ้นแล้ว</div><div style="font-size:20px;font-weight:700">1,163</div></div>
+    <div class="card"><div class="l" style="font-size:12px;color:#7d8d85">เวลาเฉลี่ย</div><div style="font-size:20px;font-weight:700">2.4 วัน</div></div>
+  </div>
+  <div class="tbl-wrap"><table><thead><tr><th>PR ID</th><th>วันที่</th><th>หน่วยงาน</th><th>ประเภท</th><th style="text-align:right">มูลค่า</th><th>สถานะ</th><th style="text-align:center">เวลาที่ใช้</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+
+function vUsers(){
+  const U=[
+    ["narisara@thamc.go.th","นริศรา พูนทรัพย์","ผู้ป่วยนอก","User","Pending"],
+    ["wichai@thamc.go.th","วิชัย รุ่งเรือง","ห้องปฏิบัติการ","User","Pending"],
+    ["thanakorn@thamc.go.th","ธนกร พงษ์ไพบูลย์","พัสดุและคลัง","Staff","Active"],
+    ["kamonwan@thamc.go.th","กมลวรรณ ศรีสุข","ห้องผ่าตัด","User","Active"],
+    ["sawarin@thamc.go.th","สวรินทร์ ผู้บริหาร","บริหาร","Admin","Active"]
+  ];
+  const act={Pending:'<button class="btn btn-p" style="padding:6px 13px;font-size:11.5px">อนุมัติ</button>',Active:'<button class="btn" style="padding:6px 13px;font-size:11.5px;background:#fff3e2;color:#b45309">ปิดใช้งาน</button>'};
+  const sc={Pending:"chip-a",Active:"chip-g",Admin:"chip-g"};
+  const rows=U.map(u=>`<tr ${u[4]==='Pending'?'style="background:#fffdf6"':''}><td class="mono" style="color:#3d4d45">${u[0]}</td><td style="font-weight:500">${u[1]}</td><td>${u[2]}</td><td>${u[3]}</td><td><span class="chip ${sc[u[4]]||'chip-a'}">${u[4]}</span></td><td style="text-align:center">${act[u[4]]||'—'}</td></tr>`).join("");
+  return `<div class="tbl-wrap"><table><thead><tr><th>ผู้ใช้ (อีเมล)</th><th>ชื่อ-สกุล</th><th>หน่วยงาน</th><th>Role</th><th>สถานะ</th><th style="text-align:center">การจัดการ</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+
+function vNewPr(){
+  const items=DEMO_ITEMS.map((it,i)=>`<tr><td style="text-align:center">${i+1}</td><td>${it.name} (${it.no})</td><td style="text-align:center">${it.qty} ${it.uom}</td><td style="text-align:right">${it.price.toLocaleString()}.00</td><td style="text-align:right;font-weight:600">${(it.qty*it.price).toLocaleString()}.00</td></tr>`).join("");
+  return `
+  <div style="max-width:1000px;display:flex;flex-direction:column;gap:16px">
+    <div class="card"><div style="font-weight:600;border-bottom:1px solid #eef4f1;padding-bottom:10px;margin-bottom:14px"><span class="mono" style="color:#047857;margin-right:8px">01</span>ข้อมูลทั่วไป</div>
+      <div class="grid c3" style="grid-template-columns:repeat(3,1fr)">
+        <div><div style="font-size:12.5px;color:#5b6b64;margin-bottom:5px">ชื่อผู้เบิก</div><input style="width:100%;background:#f4f8f6;border:1px solid #e8eeeb;border-radius:9px;padding:10px 12px" value="กมลวรรณ ศรีสุข" readonly></div>
+        <div><div style="font-size:12.5px;color:#5b6b64;margin-bottom:5px">หน่วยงาน</div><input style="width:100%;background:#f4f8f6;border:1px solid #e8eeeb;border-radius:9px;padding:10px 12px" value="ห้องผ่าตัด" readonly></div>
+        <div><div style="font-size:12.5px;color:#5b6b64;margin-bottom:5px">ความเร่งด่วน</div><div style="display:flex;gap:8px"><span class="btn btn-p" style="flex:1;text-align:center">ปกติ</span><span class="btn btn-o" style="flex:1;text-align:center">เร่งด่วน</span></div></div>
+        <div style="grid-column:span 3"><div style="font-size:12.5px;color:#5b6b64;margin-bottom:5px">เหตุผลการขอซื้อ</div><textarea style="width:100%;border:1px solid #cdd9d3;border-radius:9px;padding:10px 12px;font-family:inherit" rows="2">ทดแทนชุดเครื่องมือผ่าตัดที่ชำรุด เพื่อรองรับการผ่าตัดในไตรมาส 3</textarea></div>
+      </div>
+    </div>
+    <div class="card"><div style="font-weight:600;border-bottom:1px solid #eef4f1;padding-bottom:10px;margin-bottom:14px"><span class="mono" style="color:#047857;margin-right:8px">02</span>รายการสินค้า</div>
+      <div class="tbl-wrap" style="border:1px solid #eef4f1"><table><thead><tr><th style="text-align:center">ลำดับ</th><th>รายการ</th><th style="text-align:center">จำนวน</th><th style="text-align:right">ราคา/หน่วย</th><th style="text-align:right">รวม</th></tr></thead><tbody>${items}</tbody></table></div>
+      <div style="display:flex;justify-content:flex-end;margin-top:14px"><div style="width:280px"><div style="display:flex;justify-content:space-between;font-size:13px;color:#5b6b64"><span>มูลค่าสินค้า</span><span>130,500.00</span></div><div style="display:flex;justify-content:space-between;font-size:13px;color:#5b6b64;margin-top:6px"><span>VAT 7%</span><span>9,135.00</span></div><div style="display:flex;justify-content:space-between;font-size:16px;font-weight:700;border-top:1px solid #e8eeeb;padding-top:8px;margin-top:8px"><span>รวมสุทธิ</span><span style="color:#047857">139,635.00</span></div></div></div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:12px"><button class="btn btn-o" style="padding:12px 24px">บันทึกร่าง</button><button class="btn btn-p" style="padding:12px 30px" onclick="openDoc('PR-202607-0042')">ส่งใบขอซื้อ &amp; ออกเอกสาร</button></div>
+  </div>`;
+}
+
+function stepper(){
+  const steps=[["สร้างคำขอ","1 ก.ค.",1],["พัสดุรับเรื่อง","1 ก.ค.",1],["จัดซื้อ","2 ก.ค.",1],["ตรวจรับ","กำลังทำ",2],["เสร็จสิ้น","—",0]];
+  return `<div style="display:flex;align-items:flex-start;margin-bottom:24px;overflow-x:auto">${steps.map((s,i)=>{
+    const done=s[2]===1,cur=s[2]===2;
+    const circle=done?`<div style="width:32px;height:32px;border-radius:50%;background:#047857;color:#fff;display:flex;align-items:center;justify-content:center">✓</div>`
+      :cur?`<div style="width:32px;height:32px;border-radius:50%;background:#fff;border:2px solid #d97706;color:#d97706;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 4px #fff3e2">${i+1}</div>`
+      :`<div style="width:32px;height:32px;border-radius:50%;background:#f0f3f1;border:2px solid #e8eeeb"></div>`;
+    return `<div style="flex:1;min-width:70px;display:flex;flex-direction:column;align-items:center;text-align:center;position:relative">${circle}${i<4?`<div style="position:absolute;top:16px;left:50%;width:100%;height:2px;background:${done?'#047857':'#e8eeeb'}"></div>`:''}<div style="font-size:12px;font-weight:600;margin-top:9px;color:${cur?'#d97706':done?'#12211b':'#a3b0a9'}">${s[0]}</div><div style="font-size:10.5px;color:#8a9a92;margin-top:2px">${s[1]}</div></div>`;
+  }).join("")}</div>`;
+}
+function tItem(done,title,who,time,dur,cur){
+  const circle=done?`<div style="width:26px;height:26px;border-radius:50%;background:#047857;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px">✓</div>`
+    :cur?`<div style="width:26px;height:26px;border-radius:50%;background:#fff;border:2px solid #d97706;color:#d97706;font-weight:700;font-size:11px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 3px #fff3e2">4</div>`
+    :`<div style="width:26px;height:26px;border-radius:50%;background:#f0f3f1;border:2px solid #e8eeeb"></div>`;
+  return `<div style="display:flex;gap:14px"><div style="display:flex;flex-direction:column;align-items:center">${circle}<div style="width:2px;flex:1;background:${done?'#cfe9dd':'#e8eeeb'};margin:3px 0"></div></div>
+    <div style="flex:1;padding-bottom:14px"><div style="display:flex;justify-content:space-between"><span style="font-size:13.5px;font-weight:600;color:${cur?'#12211b':done?'#12211b':'#a3b0a9'}">${title}</span><span class="mono" style="font-size:11px;color:#8a9a92">${time}</span></div>
+    ${who?`<div style="font-size:12px;color:#7d8d85;margin-top:3px">${who}</div>`:''}${dur?`<div style="display:inline-block;margin-top:6px;font-size:10.5px;color:${cur?'#d97706':'#5b6b64'};background:${cur?'#fff3e2':'#eef4f1'};padding:3px 8px;border-radius:6px">⏱ ${dur}</div>`:''}</div></div>`;
+}
+function vTracking(){
+  return `
+  <div class="card" style="margin-bottom:16px;display:flex;gap:12px;flex-wrap:wrap;align-items:end">
+    <div style="flex:2;min-width:200px"><div style="font-size:12px;color:#5b6b64;margin-bottom:5px">เลข PR ID</div><input class="mono" style="width:100%;border:1px solid #cdd9d3;border-radius:9px;padding:10px 12px" value="PR-202607-0042"></div>
+    <button class="btn btn-p" style="padding:11px 26px">ค้นหา</button>
+  </div>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;padding-bottom:16px;border-bottom:1px solid #eef4f1;margin-bottom:20px">
+      <div><div class="mono" style="font-size:16px;font-weight:600;color:#047857">PR-202607-0042</div><div style="font-size:13px;color:#3d4d45;margin-top:4px">ชุดเครื่องมือผ่าตัด · ห้องผ่าตัด · ฿139,635</div></div>
+      <div style="text-align:right"><span class="chip chip-a" style="font-size:12.5px;padding:7px 14px">● รอตรวจรับสินค้า</span>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px;flex-wrap:wrap"><button class="btn btn-o" style="padding:6px 12px;font-size:11.5px" onclick="openDoc('PR-202607-0042')">🖨 ใบเสนอความต้องการซื้อ</button><button class="btn btn-x" style="padding:6px 12px;font-size:11.5px" onclick="exportSAP()">▤ ดึง Excel ทำ PR (SAP)</button></div></div>
+    </div>
+    ${stepper()}
+    <div class="grid c2" style="grid-template-columns:1fr 1fr;gap:20px">
+      <div>${tItem(1,"สร้างคำขอซื้อ","กมลวรรณ ศรีสุข · พยาบาลวิชาชีพ","1 ก.ค. 09:12","")}${tItem(1,"พัสดุรับเรื่อง","ธนกร พงษ์ไพบูลย์ · จนท.พัสดุ","1 ก.ค. 12:24","3 ชม. 12 น.")}</div>
+      <div>${tItem(1,"ดำเนินการจัดซื้อ","PO 6907-0142 · บ.เมดิคอล ซัพพลาย","2 ก.ค. 14:40","1 วัน 2 ชม.")}${tItem(0,"ตรวจรับสินค้า","กำลังดำเนินการ · คาดเสร็จ 5 ก.ค.","",  "ค้าง 4 ชม. 45 น.",true)}</div>
+    </div>
+  </div>`;
+}
+
+/* ---------- A4 DOCUMENT ---------- */
+function openDoc(id){ state.screen="document"; document.getElementById("pageTitle").textContent="เอกสารใบเสนอความต้องการซื้อ"; document.querySelectorAll(".nav-item,.bn-item").forEach(b=>b.classList.remove("active")); toggleDrawer(false); render(); }
+function vDocument(){
+  const rows=DEMO_ITEMS.map((it,i)=>`<tr><td style="text-align:center">${i+1}</td><td>${it.name} (${it.no})</td><td style="text-align:center">${it.qty} ${it.uom}</td><td style="text-align:center">${it.qty} ${it.uom}</td><td style="text-align:right">${it.price.toLocaleString()}.00</td><td style="text-align:right">${(it.qty*it.price).toLocaleString()}.00</td></tr>`).join("");
+  return `
+  <div class="doc-tools no-print">
+    <button class="btn btn-o" onclick="go('tracking')">← กลับไปติดตามสถานะ</button>
+    <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-x" onclick="exportSAP()">▤ ดึง Excel ทำ PR (SAP)</button><button class="btn btn-p" onclick="window.print()">🖨 พิมพ์เอกสาร (A4)</button></div>
+  </div>
+  <div id="pr-doc"><div class="prdoc">
+    <div style="text-align:center;font-weight:700"><div style="font-size:20px;letter-spacing:.05em">T H <span style="color:#c0392b">▲</span> M C</div><div style="font-size:12px;color:#7a1f1f">ศูนย์การแพทย์ธรรมศาสตร์ · โรงพยาบาลธรรมศาสตร์เฉลิมพระเกียรติ</div><div style="font-size:11px;color:#444;font-weight:400">95 หมู่ 8 ถ.พหลโยธิน ต.คลองหนึ่ง อ.คลองหลวง จ.ปทุมธานี 12120 · โทร 0 2078 0050</div></div>
+    <div style="border-bottom:2px solid #7a1f1f;margin:6px 0 8px"></div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div style="display:flex;gap:10px"><div id="qrbox" style="width:70px;height:70px;border:1px solid #ddd;flex-shrink:0"></div><div style="font-size:12.5px;line-height:1.6;padding-top:2px"><div style="font-weight:700">ที่ PR-202607-0042</div><div>วันที่ 1 กรกฎาคม 2569</div></div></div>
+      <div style="border:1px solid #000;padding:6px 10px;font-size:11.5px;line-height:1.7;width:250px">แผนกจัดซื้อและคลังพัสดุ รับที่................<br>วันที่................ เวลา................</div>
+    </div>
+    <div style="text-align:center;font-size:17px;font-weight:700;margin:10px 0 4px">ใบเสนอความต้องการซื้อ/จ้าง/เช่า</div>
+    <div style="margin-top:6px">เรื่อง&nbsp;&nbsp;ขอเสนอความต้องการ <span style="border:1px solid #000;padding:0 4px;font-weight:700">✓ ซื้อ</span> ☐ จ้าง ☐ เช่า</div>
+    <div>เรียน&nbsp;&nbsp;หัวหน้าเจ้าหน้าที่พัสดุ (ผ่านงานจัดซื้อและคลังพัสดุ ฝ่ายการเงินและบัญชี)</div>
+    <div style="text-indent:36px;margin-top:6px">ด้วย <span class="dot" style="min-width:140px;text-align:center">ห้องผ่าตัด</span> โทร <span class="dot" style="min-width:100px;text-align:center">02-078-0055</span> มีความประสงค์ขอเสนอความต้องการ (ซื้อ) พัสดุ ตามรายการดังต่อไปนี้</div>
+    <table class="items" style="margin-top:8px"><thead><tr style="background:#f0f0f0;text-align:center"><th style="width:8%">ลำดับที่</th><th style="width:38%">รายการเสนอความต้องการ</th><th style="width:14%">อัตราการใช้ต่อเดือน</th><th style="width:9%">จำนวน</th><th style="width:15%">ราคาต่อหน่วย</th><th style="width:16%">ราคารวมทั้งสิ้น</th></tr></thead>
+    <tbody>${rows}
+      <tr><td style="height:22px">&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td colspan="4" rowspan="3" style="vertical-align:top;font-size:12px">หมายเหตุ : (ชี้แจงเหตุผลที่ต้องการซื้อ)<br>ทดแทนชุดเครื่องมือผ่าตัดที่ชำรุด เพื่อรองรับการผ่าตัดในไตรมาส 3</td><td>มูลค่าพัสดุ</td><td style="text-align:right">130,500.00</td></tr>
+      <tr><td>ภาษีมูลค่าเพิ่ม 7%</td><td style="text-align:right">9,135.00</td></tr>
+      <tr style="font-weight:700"><td>รวมเป็นเงินทั้งสิ้น</td><td style="text-align:right">139,635.00</td></tr>
+    </tbody></table>
+    <div style="margin-top:10px">และขอเสนอชื่อกรรมการตรวจรับดังนี้</div>
+    <div>1. <span class="dot" style="min-width:230px">นพ.ประสิทธิ์ วัฒนกุล</span> ประธานกรรมการ</div>
+    <div>2. <span class="dot" style="min-width:230px">สุนทรี ภักดี</span> กรรมการ</div>
+    <div>3. <span class="dot" style="min-width:230px">อนุชา ทองดี</span> กรรมการและเลขานุการ</div>
+    <div style="text-indent:36px;margin-top:8px">จึงเรียนมาเพื่อโปรดพิจารณาให้ดำเนินการจัดซื้อ/จ้าง ตามรายการดังกล่าวด้วย จักขอบพระคุณยิ่ง</div>
+    <div style="display:flex;justify-content:space-between;text-align:center;margin-top:26px;font-size:12.5px">
+      <div style="width:46%"><div>(ลงชื่อ)........................................ผู้เสนอความต้องการ</div><div style="margin-top:4px">( กมลวรรณ ศรีสุข )</div><div style="margin-top:4px">ตำแหน่ง : พยาบาลวิชาชีพ</div></div>
+      <div style="width:46%"><div>(ลงชื่อ)........................................หัวหน้างาน</div><div style="margin-top:4px">(........................................)</div><div style="margin-top:4px">ตำแหน่ง : ........................................</div></div>
+    </div>
+  </div></div>`;
+}
+function drawQR(){
+  try{ const q=qrcode(0,"M"); q.addData("PR-202607-0042"); q.make();
+    const box=document.getElementById("qrbox"); if(box) box.innerHTML=q.createImgTag(3,4);
+    const img=box&&box.querySelector("img"); if(img){img.style.width="100%";img.style.height="100%";img.style.imageRendering="pixelated";}
+  }catch(e){}
+}
+
+/* ---------- SAP EXCEL EXPORT ---------- */
+function exportSAP(){
+  if(!window.XLSX){ alert("กำลังโหลดไลบรารี กรุณาลองอีกครั้ง"); return; }
+  const headers=["Type","Item No.","Item Description","Item Details","Vendor","Required Date","Required Qty.","UoM Group","UoM Code","UoM Name","Info Price","Gross Price","Discount %","Tax Code","Total (LC)","Whse","Project","Business Type","Department"];
+  const rows=DEMO_ITEMS.map(it=>({
+    "Type":"","Item No.":it.no,"Item Description":it.name,"Item Details":"","Vendor":"VT00170",
+    "Required Date":"05.07.26","Required Qty.":it.qty,"UoM Group":it.uom,"UoM Code":it.uom,"UoM Name":it.uom,
+    "Info Price":it.price,"Gross Price":it.price,"Discount %":0,"Tax Code":"IEH07",
+    "Total (LC)":"THB "+(it.qty*it.price).toLocaleString("en-US",{minimumFractionDigits:2}),
+    "Whse":"17CMS","Project":"","Business Type":"17","Department":"17CMS"
+  }));
+  const ws=XLSX.utils.json_to_sheet(rows,{header:headers});
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"PR");
+  XLSX.writeFile(wb,"PR-202607-0042_SAP.xlsx");
+}
+
+/* ---------- BOOT ---------- */
+buildNav();
+if(!DEMO) document.getElementById("demoChip").classList.add("hidden");
+showAuth("login");
+</script>
+</body>
+</html>
