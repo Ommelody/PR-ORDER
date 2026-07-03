@@ -211,7 +211,7 @@ td{padding:11px 13px;border-top:1px solid #eef4f1}
 
 <script>
 /* ================= CONFIG ================= */
-const CONFIG = { WEB_APP_URL: "" };   // ← ใส่ URL Apps Script (/exec) เพื่อซิงก์ข้อมูลขึ้น Google Sheets
+const CONFIG = { WEB_APP_URL: "https://script.google.com/macros/s/AKfycbx1rMtJUM5V8aqgl9gWpQqHfXatlK6DTeKg_dDvqfQtVmgpa6I0lwdIVgszAPIbfQ_pRg/exec" };   // ← ใส่ URL Apps Script (/exec) เพื่อซิงก์ข้อมูลขึ้น Google Sheets
 function syncRemote(action, args){
   if(!CONFIG.WEB_APP_URL) return;
   fetch(CONFIG.WEB_APP_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action,args})}).catch(()=>{});
