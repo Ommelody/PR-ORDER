@@ -368,9 +368,10 @@ function nextPrId(){
   if(DB.seq.ym!==ym){ DB.seq.ym=ym; DB.seq.n=0; }
   DB.seq.n++; return "PR-"+ym+"-"+String(DB.seq.n).padStart(4,"0");
 }
-function totals(items){
-  const sub=(items||[]).reduce((s,it)=>s+(parseFloat(it.qty)||0)*(parseFloat(it.price)||0),0);
-  const vat=sub*0.07; return {sub, vat, grand:sub+vat};
+function totals(items, incl){
+  const sum=(items||[]).reduce((s,it)=>s+(parseFloat(it.qty)||0)*(parseFloat(it.price)||0),0);
+  if(incl){ const grand=sum, sub=grand/1.07, vat=grand-sub; return {sub, vat, grand, incl:true}; }
+  const sub=sum, vat=sub*0.07; return {sub, vat, grand:sub+vat, incl:false};
 }
 function money(n){ return Number(n).toLocaleString("th-TH",{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function fmtB(n){ return "฿"+Number(Math.round(n)).toLocaleString("th-TH"); }
@@ -600,13 +601,13 @@ function renderRecent(list){
   if(_prView==="list"){
     return '<div style="display:flex;flex-direction:column;gap:8px">'+list.map(p=>
       '<div class="rowc" style="display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid #eef4f1;border-radius:10px" onclick="prPopup(\''+p.id+'\')">'+
-      '<div style="flex:1;min-width:0"><div class="mono" style="font-size:12.5px;font-weight:600">'+p.id+'</div><div style="font-size:11.5px;color:#8a9a92">'+esc(p.requester)+' · '+esc(p.type)+' · '+fmtB(totals(p.items).grand)+'</div></div>'+chip(p.status)+'</div>').join("")+'</div>';
+      '<div style="flex:1;min-width:0"><div class="mono" style="font-size:12.5px;font-weight:600">'+p.id+'</div><div style="font-size:11.5px;color:#8a9a92">'+esc(p.requester)+' · '+esc(p.type)+' · '+fmtB(totals(p.items,p.vatIncl).grand)+'</div></div>'+chip(p.status)+'</div>').join("")+'</div>';
   }
   if(_prView==="grid"){
     return '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px">'+list.map(p=>
       '<div class="rowc" style="padding:12px;border:1px solid #eef4f1;border-radius:10px" onclick="prPopup(\''+p.id+'\')">'+
       '<div class="mono" style="font-size:12px;font-weight:600">'+p.id+'</div><div style="font-size:11px;color:#8a9a92;margin:4px 0">'+esc(p.type)+'</div>'+
-      '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px"><b style="font-size:12.5px">'+fmtB(totals(p.items).grand)+'</b>'+chip(p.status)+'</div></div>').join("")+'</div>';
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px"><b style="font-size:12.5px">'+fmtB(totals(p.items,p.vatIncl).grand)+'</b>'+chip(p.status)+'</div></div>').join("")+'</div>';
   }
   return '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">'+list.map(p=>{
     const c=STATUS_CHIP[p.status]||["-","#666","#eee"];
@@ -615,20 +616,20 @@ function renderRecent(list){
     '<div style="display:flex;justify-content:space-between;align-items:center"><span class="mono" style="font-size:13px;font-weight:700">'+p.id+'</span>'+chip(p.status)+'</div>'+
     '<div style="font-size:12.5px;color:#3d4d45;margin-top:8px">'+esc(p.items[0]?p.items[0].name:p.type)+(p.items.length>1?' +'+(p.items.length-1):'')+'</div>'+
     '<div style="font-size:11.5px;color:#8a9a92;margin-top:3px">'+esc(p.requester)+' · '+esc(p.dept)+'</div>'+
-    '<div style="font-size:16px;font-weight:700;color:var(--green);margin-top:8px">'+fmtB(totals(p.items).grand)+'</div></div></div>';}).join("")+'</div>';
+    '<div style="font-size:16px;font-weight:700;color:var(--green);margin-top:8px">'+fmtB(totals(p.items,p.vatIncl).grand)+'</div></div></div>';}).join("")+'</div>';
 }
 function drillStatus(status){ RF={dept:"",type:"",status:status||"",from:"",to:"",q:""}; go("reports"); }
 function drillType(type){ RF={dept:"",type:type||"",status:"",from:"",to:"",q:""}; go("reports"); }
 function drillDept(dept){ RF={dept:dept||"",type:"",status:"",from:"",to:"",q:""}; go("reports"); }
 function vDashboard(){
-  const prs=DB.prs, t=prs.reduce((s,p)=>s+totals(p.items).grand,0);
+  const prs=DB.prs, t=prs.reduce((s,p)=>s+totals(p.items,p.vatIncl).grand,0);
   const cnt=st=>prs.filter(p=>p.status===st).length;
   const recentList=[...prs].sort((a,b)=>new Date(b.at)-new Date(a.at)).slice(0,6);
   const recent=renderRecent(recentList);
   // monthly counts (last 6 months)
   const now=new Date(); const months=[]; 
   for(let i=5;i>=0;i--){ const d=new Date(now.getFullYear(),now.getMonth()-i,1); months.push({y:d.getFullYear(),m:d.getMonth(),label:d.toLocaleDateString("th-TH",{month:"short"}),c:0,v:0}); }
-  prs.forEach(p=>{ const d=new Date(p.at); const mm=months.find(x=>x.y===d.getFullYear()&&x.m===d.getMonth()); if(mm){ mm.c++; mm.v+=totals(p.items).grand; } });
+  prs.forEach(p=>{ const d=new Date(p.at); const mm=months.find(x=>x.y===d.getFullYear()&&x.m===d.getMonth()); if(mm){ mm.c++; mm.v+=totals(p.items,p.vatIncl).grand; } });
   const maxC=Math.max(1,...months.map(x=>x.c));
   const bars=months.map((x,i)=>'<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px"><div title="'+x.c+' รายการ" style="width:70%;max-width:34px;height:'+Math.round(8+x.c/maxC*104)+'px;background:linear-gradient(180deg,var(--green-m),var(--green));border-radius:5px 5px 0 0;transition:height .3s"></div><div style="font-size:11px;color:#7d8d85">'+x.label+'</div><div style="font-size:11px;font-weight:700;color:#12211b">'+x.c+'</div></div>').join("");
   // donut by type
@@ -640,7 +641,7 @@ function vDashboard(){
   const donut='<div style="display:flex;align-items:center;gap:16px"><div style="width:120px;height:120px;border-radius:50%;flex-shrink:0;background:conic-gradient('+segs.join(",")+');position:relative"><div style="position:absolute;inset:26px;background:#fff;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center"><div style="font-size:19px;font-weight:700">'+prs.length+'</div><div style="font-size:10px;color:#8a9a92">รายการ</div></div></div>'+
     '<div style="flex:1;display:flex;flex-direction:column;gap:8px">'+typeEntries.map(([k,v],i)=>'<div class="rowc" style="display:flex;align-items:center;gap:8px;font-size:12px;padding:3px 4px;border-radius:6px" onclick="drillType(\''+esc(k)+'\')"><span style="width:10px;height:10px;border-radius:3px;background:'+palette[i%palette.length]+'"></span><span style="flex:1;color:#3d4d45">'+esc(k)+'</span><b>'+v+'</b></div>').join("")+'</div></div>';
   // dept bars
-  const byDept={}; prs.forEach(p=>{ byDept[p.dept]=(byDept[p.dept]||0)+totals(p.items).grand; });
+  const byDept={}; prs.forEach(p=>{ byDept[p.dept]=(byDept[p.dept]||0)+totals(p.items,p.vatIncl).grand; });
   const deptEntries=Object.entries(byDept).sort((a,b)=>b[1]-a[1]).slice(0,5);
   const maxD=Math.max(1,...deptEntries.map(x=>x[1]));
   const deptBars=deptEntries.map(([k,v])=>'<div class="rowc" style="margin-bottom:11px;padding:2px 4px;border-radius:6px" onclick="drillDept(\''+esc(k)+'\')"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:#3d4d45">'+esc(k)+'</span><b>'+fmtB(v)+'</b></div><div style="height:8px;background:#eef4f1;border-radius:4px"><div style="width:'+Math.round(v/maxD*100)+'%;height:8px;background:var(--green);border-radius:4px"></div></div></div>').join("");
@@ -692,7 +693,11 @@ function vNewPr(){
     '<div class="tbl-wrap items-edit" style="border:1px solid #eef4f1"><table><thead><tr><th style="min-width:220px">ชื่อรายการ *</th><th style="width:110px">รหัสTHAMC</th><th style="width:80px">จำนวน *</th><th style="width:90px">หน่วย</th><th style="width:120px">ราคา/หน่วย</th><th style="width:110px;text-align:right">รวม</th><th style="width:44px"></th></tr></thead><tbody id="itemsBody"></tbody></table></div>'+
     '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-top:14px;flex-wrap:wrap;gap:12px">'+
     '<button class="btn" style="color:var(--green);border:1px dashed var(--green-m)" onclick="addItemRow()">＋ เพิ่มรายการ</button>'+
-    '<div style="width:280px"><div style="display:flex;justify-content:space-between;font-size:13px;color:#5b6b64"><span>มูลค่าสินค้า</span><span id="tSub">0.00</span></div>'+
+    '<div style="width:280px">'+
+    '<div style="display:flex;gap:6px;margin-bottom:10px">'+
+    '<label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid #cdd9d3;border-radius:8px;padding:8px;cursor:pointer;font-size:12px"><input type="radio" name="vatMode" value="ex" checked onchange="recalc()"> ราคาก่อน VAT</label>'+
+    '<label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid #cdd9d3;border-radius:8px;padding:8px;cursor:pointer;font-size:12px"><input type="radio" name="vatMode" value="in" onchange="recalc()"> รวม VAT แล้ว</label></div>'+
+    '<div style="display:flex;justify-content:space-between;font-size:13px;color:#5b6b64"><span>มูลค่าสินค้า (ก่อน VAT)</span><span id="tSub">0.00</span></div>'+
     '<div style="display:flex;justify-content:space-between;font-size:13px;color:#5b6b64;margin-top:6px"><span>ภาษีมูลค่าเพิ่ม 7%</span><span id="tVat">0.00</span></div>'+
     '<div style="display:flex;justify-content:space-between;font-size:16px;font-weight:700;border-top:1px solid #e8eeeb;padding-top:8px;margin-top:8px"><span>ยอดรวมสุทธิ</span><span id="tGrand" style="color:#047857">0.00</span></div></div></div></div>'+
   '<div class="card"><div style="font-weight:600;border-bottom:1px solid #eef4f1;padding-bottom:10px;margin-bottom:14px"><span class="mono" style="color:#047857;margin-right:8px">03</span>กรรมการตรวจรับ <span style="font-weight:400;font-size:11.5px;color:#8a9a92">(เกิน 100,000 บาท ต้องมี 3 คน)</span></div>'+
@@ -728,8 +733,9 @@ function readItems(){
 }
 function recalc(){
   const items=readItems();
+  const incl=(document.querySelector('input[name="vatMode"]:checked')||{}).value==="in";
   items.forEach(it=>{ it._tr.querySelector(".it-total").textContent=money(it.qty*it.price); });
-  const t=totals(items);
+  const t=totals(items, incl);
   tSub.textContent=money(t.sub); tVat.textContent=money(t.vat); tGrand.textContent=money(t.grand);
 }
 function submitPR(){
@@ -746,6 +752,7 @@ function submitPR(){
     pr.versions.push({ v:pr.versions.length+1, at:new Date().toISOString(), by:USER.name,
       snapshot:{reason:pr.reason,type:pr.type,urgency:pr.urgency,procType:pr.procType,phone:pr.phone,committee:pr.committee,items:JSON.parse(JSON.stringify(pr.items))} });
     pr.reason=reason; pr.type=fType.value; pr.urgency=fUrgency.value; pr.phone=fPhone.value.trim();
+    pr.vatIncl=(document.querySelector('input[name="vatMode"]:checked')||{}).value==="in";
     pr.procType=(document.querySelector('input[name="proc"]:checked')||{}).value||pr.procType;
     pr.committee=[c1,fC2.value.trim(),fC3.value.trim()]; pr.items=items;
     pr.status="ยื่นเสนอซื้อ"; pr.rejectNote="";
@@ -755,6 +762,7 @@ function submitPR(){
   const pr={ id:nextPrId(), at:new Date().toISOString(), requester:USER.name, email:USER.email,
     dept:USER.dept, phone:fPhone.value.trim(), reason, type:fType.value, urgency:fUrgency.value,
     procType:(document.querySelector('input[name="proc"]:checked')||{}).value||"ซื้อ",
+    vatIncl:(document.querySelector('input[name="vatMode"]:checked')||{}).value==="in",
     committee:[c1,fC2.value.trim(),fC3.value.trim()], items, status:"ยื่นเสนอซื้อ", versions:[],
     log:[{t:"สร้างคำขอซื้อ",by:USER.name,at:new Date().toISOString()}] };
   DB.prs.unshift(pr); saveDB(); syncRemote("submitPR",{pr}); buildNav();
@@ -770,6 +778,7 @@ function editPR(id){
       fReason.value=pr.reason||""; fPhone.value=pr.phone||"";
       if([...fType.options].some(o=>o.value===pr.type)) fType.value=pr.type; 
       fUrgency.value=pr.urgency||"ปกติ";
+      const vm=document.querySelector('input[name="vatMode"][value="'+(pr.vatIncl?"in":"ex")+'"]'); if(vm) vm.checked=true;
       const pc=document.querySelector('input[name="proc"][value="'+(pr.procType||"ซื้อ")+'"]'); if(pc) pc.checked=true;
       fC1.value=(pr.committee||[])[0]||""; fC2.value=(pr.committee||[])[1]||""; fC3.value=(pr.committee||[])[2]||"";
       const body=document.getElementById("itemsBody"); body.innerHTML="";
@@ -790,7 +799,7 @@ function vHistory(){
     const note=p.status==="ต้องการการแก้ไข"&&p.rejectNote?'<div style="font-size:11px;color:#c0392b;margin-top:3px">เหตุผล: '+p.rejectNote+'</div>':"";
     const resend=p.status==="ต้องการการแก้ไข"?'<button class="btn btn-p" style="padding:5px 12px;font-size:11.5px;margin-right:6px" onclick="event.stopPropagation();editPR(\''+p.id+'\')">แก้ไข &amp; ส่งใหม่</button>':"";
     return '<tr class="rowc" onclick="prPopup(\''+p.id+'\')"><td><div class="mono" style="font-weight:600">'+p.id+'</div><div style="font-size:11px;color:#8a9a92">'+fmtD(p.at)+'</div></td>'+
-    '<td>'+p.type+note+'</td><td style="text-align:right;font-weight:600">'+fmtB(totals(p.items).grand)+'</td><td>'+chip(p.status)+'</td>'+
+    '<td>'+p.type+note+'</td><td style="text-align:right;font-weight:600">'+fmtB(totals(p.items,p.vatIncl).grand)+'</td><td>'+chip(p.status)+'</td>'+
     '<td style="text-align:center">'+resend+'<button class="btn btn-o" style="padding:5px 12px;font-size:11.5px" onclick="event.stopPropagation();openDoc(\''+p.id+'\')">เอกสาร</button></td></tr>';}).join("");
   return '<div style="font-size:12.5px;color:#8a9a92;margin-bottom:10px">คลิกที่รายการเพื่อดูสถานะแบบป็อปอัพ</div><div class="tbl-wrap"><table><thead><tr><th>PR ID</th><th>ประเภท</th><th style="text-align:right">มูลค่า</th><th>สถานะ</th><th style="text-align:center">ใบขอซื้อ</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
 }
@@ -798,7 +807,7 @@ function vHistory(){
 function prPopup(id){
   const pr=findPR(id); if(!pr) return;
   if(!Array.isArray(pr.log)||!pr.log.length) pr.log=[{t:"สร้างคำขอซื้อ",by:pr.requester||"",at:pr.at}];
-  const t=totals(pr.items);
+  const t=totals(pr.items,pr.vatIncl);
   const tl=pr.log.map((e,i)=>{
     const d=i>0?dur(new Date(e.at)-new Date(pr.log[i-1].at)):null;
     return '<div style="display:flex;gap:12px"><div style="display:flex;flex-direction:column;align-items:center"><div style="width:22px;height:22px;border-radius:50%;background:#047857;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px">✓</div>'+(i<pr.log.length-1?'<div style="width:2px;flex:1;background:#cfe9dd;margin:2px 0"></div>':'')+'</div>'+
@@ -818,7 +827,7 @@ function prPopup(id){
 /* ---------- Staff queues ---------- */
 function vQueue(statuses){
   const list=DB.prs.filter(p=>statuses.includes(p.status));
-  const totalVal=list.reduce((s,p)=>s+totals(p.items).grand,0);
+  const totalVal=list.reduce((s,p)=>s+totals(p.items,p.vatIncl).grand,0);
   const actFor=(p)=>{
     if(p.status==="ยื่นเสนอซื้อ") return ['<button class="btn btn-p" style="padding:6px 12px;font-size:11.5px" onclick="event.stopPropagation();actAccept(\''+p.id+'\')">รับเรื่อง</button>',
       '<button class="btn btn-w" style="padding:6px 11px;font-size:11.5px" onclick="event.stopPropagation();actReject(\''+p.id+'\')">ส่งกลับแก้ไข</button>'];
@@ -830,7 +839,7 @@ function vQueue(statuses){
   const rows=list.map(p=>'<tr class="rowc" onclick="track(\''+p.id+'\')">'+
     '<td><div class="mono" style="font-weight:600">'+p.id+'</div><div style="font-size:11px;color:#8a9a92">'+fmtDT(p.at)+'</div></td>'+
     '<td><div style="font-weight:500">'+p.requester+'</div><div style="font-size:11px;color:#8a9a92">'+p.dept+'</div></td>'+
-    '<td>'+chip(p.status)+'</td><td style="text-align:right;font-weight:600">'+fmtB(totals(p.items).grand)+'</td>'+
+    '<td>'+chip(p.status)+'</td><td style="text-align:right;font-weight:600">'+fmtB(totals(p.items,p.vatIncl).grand)+'</td>'+
     '<td style="text-align:center"><div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap">'+actFor(p).join("")+
     '<button class="btn btn-o" style="padding:6px 11px;font-size:11.5px" onclick="event.stopPropagation();openDoc(\''+p.id+'\')">เอกสาร</button>'+
     '<button class="btn btn-x" style="padding:6px 11px;font-size:11.5px" onclick="event.stopPropagation();exportSAP(\''+p.id+'\')">Excel SAP</button></div></td></tr>').join("");
@@ -853,7 +862,7 @@ function actAccept(id){ const p=findPR(id);
   const rc=(p.log||[]).filter(l=>l.t==="พัสดุรับเรื่อง").length;
   const rcLabel=rc>0?" (รับครั้งที่ "+(rc+1)+")":"";
   openModal("รับเรื่อง / เลือกเงื่อนไขดำเนินการ"+rcLabel,
-    '<div style="font-size:13px;color:#5b6b64;margin-bottom:12px">'+id+' · '+p.requester+' · '+fmtB(totals(p.items).grand)+'</div>'+
+    '<div style="font-size:13px;color:#5b6b64;margin-bottom:12px">'+id+' · '+p.requester+' · '+fmtB(totals(p.items,p.vatIncl).grand)+'</div>'+
     '<label class="lbl">เงื่อนไขการดำเนินการ <b style="color:#ef4444">*</b></label>'+
     '<div style="display:flex;flex-direction:column;gap:8px">'+
     '<label style="display:flex;align-items:center;gap:9px;border:1px solid #cdd9d3;border-radius:9px;padding:11px;cursor:pointer;font-size:13px"><input type="radio" name="cond" value="le"> วงเงินไม่เกิน 500,000 บาท <span style="color:#8a9a92;font-size:11.5px">(→ ดำเนินการ SAP)</span></label>'+
@@ -901,7 +910,7 @@ function vTracking(){
     '<button class="btn btn-p" style="padding:11px 26px" onclick="doTrack()">ค้นหา</button></div>';
   if(!pr) return search+'<div class="card" style="text-align:center;color:#8a9a92;padding:40px">ไม่พบเอกสาร</div>';
   if(!Array.isArray(pr.log)||!pr.log.length) pr.log=[{t:"สร้างคำขอซื้อ",by:pr.requester||"",at:pr.at||new Date().toISOString()}];
-  const t=totals(pr.items);
+  const t=totals(pr.items,pr.vatIncl);
   const procLabel=pr.condition==="med"?"ตรวจเอกสารเครื่องมือแพทย์":pr.condition==="gt"?"ดำเนินการ SAP & EGP":"ดำเนินการ SAP";
   const STEPS=["สร้างคำขอ","พัสดุรับเรื่อง",procLabel,"อนุมัติ PO","ตรวจรับ","เสร็จสิ้น"];
   const doneMap={"ยื่นเสนอซื้อ":1,"กำลังดำเนินการ SAP":2,"กำลังดำเนินการ SAP & EGP":2,"ส่งตรวจเอกสารเครื่องมือแพทย์":2,"อยู่ระหว่างตรวจสอบ":3,"อนุมัติใบสั่งซื้อ":4,"ตรวจรับแล้ว":6,"ต้องการการแก้ไข":1,"ยกเลิก":0};
@@ -976,8 +985,8 @@ function vReports(){
     const lg=(Array.isArray(p.log)&&p.log.length)?p.log:[{at:p.at}];
     const tot=dur(new Date(lg[lg.length-1].at)-new Date(lg[0].at));
     return '<tr class="rowc" onclick="prPopup(\''+p.id+'\')"><td class="mono">'+p.id+'</td><td style="color:#5b6b64">'+fmtD(p.at)+'</td><td>'+esc(p.dept)+'</td><td>'+esc(p.type)+'</td>'+
-    '<td style="text-align:right;font-weight:600">'+fmtB(totals(p.items).grand)+'</td><td>'+chip(p.status)+'</td><td style="text-align:center;color:#5b6b64">'+tot+'</td></tr>';}).join("");
-  const t=list.reduce((s,p)=>s+totals(p.items).grand,0);
+    '<td style="text-align:right;font-weight:600">'+fmtB(totals(p.items,p.vatIncl).grand)+'</td><td>'+chip(p.status)+'</td><td style="text-align:center;color:#5b6b64">'+tot+'</td></tr>';}).join("");
+  const t=list.reduce((s,p)=>s+totals(p.items,p.vatIncl).grand,0);
   // stats (item 11)
   const received=list.filter(p=>p.log&&p.log.some(l=>l.t&&l.t.indexOf("พัสดุรับเรื่อง")===0)).length;
   const returned=list.filter(p=>p.log&&p.log.some(l=>l.t==="ส่งกลับแก้ไข")).length;
@@ -1005,7 +1014,7 @@ function vReports(){
 function exportReport(){
   if(!window.XLSX)return;
   const rows=reportFiltered().map(p=>({"PR_ID":p.id,"วันที่":fmtD(p.at),"ผู้ขอซื้อ":p.requester,"หน่วยงาน":p.dept,"ประเภท":p.type,
-    "มูลค่ารวม":totals(p.items).grand,"สถานะ":p.status,"เลข PO":(p.po&&p.po.number)||"","ผู้ขาย":(p.po&&p.po.vendor)||""}));
+    "มูลค่ารวม":totals(p.items,p.vatIncl).grand,"สถานะ":p.status,"เลข PO":(p.po&&p.po.number)||"","ผู้ขาย":(p.po&&p.po.vendor)||""}));
   const ws=XLSX.utils.json_to_sheet(rows), wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,"Report"); XLSX.writeFile(wb,"PR_Report_"+new Date().toISOString().slice(0,10)+".xlsx");
 }
@@ -1021,13 +1030,21 @@ function vUsers(){
       else if(u.status==="Active") act='<button class="btn btn-w" style="padding:6px 13px;font-size:11.5px" onclick="setUser(\''+u.email+'\',\'Inactive\')">ปิดใช้งาน</button>';
       else act='<button class="btn" style="padding:6px 13px;font-size:11.5px;background:#e0f2fe;color:#0369a1" onclick="setUser(\''+u.email+'\',\'Active\')">เปิดใช้งาน</button>';
     }
-    return '<tr '+(u.status==="Pending"?'style="background:#fffdf6"':'')+'><td class="mono" style="color:#3d4d45">'+u.email+'</td><td style="font-weight:500">'+u.name+'</td><td>'+u.dept+'</td><td>'+roleTH(u.role)+'</td>'+
+    return '<tr '+(u.status==="Pending"?'style="background:#fffdf6"':'')+'><td class="mono" style="color:#3d4d45">'+u.email+'</td><td style="font-weight:500">'+u.name+'</td><td>'+u.dept+'</td>'+
+    '<td><select class="in" style="padding:5px 8px;font-size:12px;min-width:120px" onchange="setRole(\''+u.email+'\',this.value)">'+
+      ['User','Staff','Admin'].map(rr=>'<option value="'+rr+'"'+(u.role===rr?' selected':'')+'>'+roleTH(rr)+'</option>').join('')+'</select></td>'+
     '<td><span class="chip" style="color:'+c[1]+';background:'+c[2]+'">'+c[0]+'</span></td><td style="text-align:center">'+act+'</td></tr>';}).join("");
   return '<div class="tbl-wrap"><table><thead><tr><th>ผู้ใช้ (อีเมล)</th><th>ชื่อ-สกุล</th><th>หน่วยงาน</th><th>บทบาท</th><th>สถานะ</th><th style="text-align:center">การจัดการ</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
 }
 function setUser(email,status){
   const u=DB.users.find(x=>x.email===email); if(!u)return;
   u.status=status; saveDB(); syncRemote("setUserStatus",{userId:email,status}); buildNav(); render();
+}
+function setRole(email,role){
+  const u=DB.users.find(x=>x.email===email); if(!u)return;
+  u.role=role; saveDB(); syncRemote("setUserRole",{userId:email,role});
+  if(USER.email===email){ USER.role=role; buildNav(); }
+  render();
 }
 
 /* ---------- A4 Document ---------- */
@@ -1039,7 +1056,7 @@ function vDocument(){
     : '☐ '+label;
   window.pcBox=pcBox;
   const pr=findPR(state.docId); if(!pr) return '<div class="card">ไม่พบเอกสาร</div>';
-  const t=totals(pr.items);
+  const t=totals(pr.items,pr.vatIncl);
   const rows=pr.items.map((it,i)=>'<tr><td style="text-align:center">'+(i+1)+'</td><td>'+it.name+(it.code?' ('+it.code+')':'')+'</td>'+
     '<td style="text-align:center">'+it.qty+' '+(it.unit||'')+'</td><td style="text-align:center">'+it.qty+' '+(it.unit||'')+'</td>'+
     '<td style="text-align:right">'+money(it.price)+'</td><td style="text-align:right">'+money(it.qty*it.price)+'</td></tr>').join("");
@@ -1172,7 +1189,7 @@ async function loadRemote(){
         let items=[]; try{ items=JSON.parse(r.ItemsJSON||"[]").map(it=>({name:it.itemName||it.name||it.ItemName||"",code:it.thamcCode||it.code||it.ThamcCode||"",qty:+it.quantity||+it.qty||+it.Quantity||0,unit:it.unit||it.Unit||"",price:+it.price||+it.Price||0})); }catch(_){}
         return {id:r.PR_ID||r.PRNumber||r.id,at:r.SubmissionDate||r.Created_Date||new Date().toISOString(),
           requester:r.SubmittingUserName||r.Requester||"",email:(r.SubmittingUserID||"").toString().toLowerCase(),dept:r.Department||"",phone:(r.DepartmentPhone||r.Phone||"").toString(),
-          reason:r.ReasonForPurchase||r.Reason||"",type:r.ItemType||r.Type||"",urgency:r.Urgency||"ปกติ",procType:r.ProcType||r.ProcurementType||"ซื้อ",condition:r.Condition||"",
+          reason:r.ReasonForPurchase||r.Reason||"",type:r.ItemType||r.Type||"",urgency:r.Urgency||"ปกติ",procType:r.ProcType||r.ProcurementType||"ซื้อ",condition:r.Condition||"",vatIncl:(r.VatIncl===true||r.VatIncl==="true"),
           committee:[r.CommitteeChairman||"",r.CommitteeMember1||"",r.CommitteeMember2||""],items,status:r.Status||"ยื่นเสนอซื้อ",
           po:r.PO_Number?{number:r.PO_Number,vendor:r.Vendor||""}:null, versions:[],
           log:(function(){try{var L=JSON.parse(r.LogJSON||"[]"); if(Array.isArray(L)&&L.length) return L;}catch(_){} return [{t:"สร้างคำขอซื้อ",by:r.SubmittingUserName||r.Requester||"",at:r.SubmissionDate||r.Created_Date||new Date().toISOString()}];})()};
