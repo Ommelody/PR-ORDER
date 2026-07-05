@@ -9,6 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <style>
 :root{
   --green:#047857; --green-d:#064e3b; --green-m:#059669; --green-soft:#e3f4ea;
@@ -308,7 +309,7 @@ function ensureSchema(){
           links:[ { label:"แบบฟอร์มใบเสนอราคาตัวอย่าง", url:"" } ] }
       ] };
   }
-  (DB.prs||[]).forEach(p=>{ if(!Array.isArray(p.versions)) p.versions=[]; });
+  (DB.prs||[]).forEach(p=>{ if(!Array.isArray(p.versions)) p.versions=[]; backfillLog(p); });
 }
 function seedDB(){
   const now = Date.now(), H = 3600e3, D = 24*H;
@@ -401,7 +402,7 @@ function doLogin(){
   liMsg.style.color="#fecaca";
   if(!u){ liMsg.textContent="อีเมลหรือรหัสผ่านไม่ถูกต้อง (บัญชีทดลอง: รหัส 1234)"; return; }
   if(u.status!=="Active"){ liMsg.textContent="สถานะผู้ใช้: "+u.status+" — กรุณารอผู้ดูแลอนุมัติ"; return; }
-  USER=u; syncRemote("login",{email:em}); enterApp();
+  USER=u; USER.role=normRole(u.role); u.role=USER.role; syncRemote("login",{email:em}); enterApp();
 }
 function doRegister(){
   const d={email:rgEmail.value.trim(),name:rgName.value.trim(),pos:rgPos.value.trim(),dept:rgDept.value.trim(),phone:rgPhone.value.trim(),pass:rgPass.value};
@@ -463,6 +464,12 @@ function openProfile(){
     closeModal(); },"บันทึก");
 }
 function roleTH(r){ return {User:"ผู้ขอซื้อ",Staff:"เจ้าหน้าที่พัสดุ",Admin:"ผู้ดูแลระบบ"}[r]||r; }
+function normRole(r){
+  const s=String(r||"").trim().toLowerCase();
+  if(s==="admin"||s==="ผู้ดูแลระบบ"||s==="ผู้ดูแล") return "Admin";
+  if(s==="staff"||s==="เจ้าหน้าที่พัสดุ"||s==="เจ้าหน้าที่"||s==="พัสดุ") return "Staff";
+  return "User";
+}
 
 /* ================= NAV (role-based) ================= */
 const MENU_DEFS = {
@@ -492,6 +499,11 @@ function buildNav(){
   document.querySelectorAll(".nav-item,.bn-item").forEach(b=>b.classList.toggle("active",b.dataset.k===state.screen));
 }
 function go(k){
+  const allowed=ROLE_MENUS[USER.role]||ROLE_MENUS.User;
+  // ผู้ใช้เข้าได้เฉพาะเมนูของบทบาทตน (+ เอกสาร/แก้ประกาศที่เปิดจากภายใน)
+  const internal=["document","announceEdit"];
+  if(!allowed.includes(k) && !internal.includes(k)){ k=allowed[0]; }
+  if(k==="announceEdit" && USER.role!=="Admin"){ k=allowed[0]; }
   state.screen=k; pageTitle.textContent=(MENU_DEFS[k]||{title:""}).title;
   document.querySelectorAll(".nav-item,.bn-item").forEach(b=>b.classList.toggle("active",b.dataset.k===k));
   toggleDrawer(false); render();
@@ -803,23 +815,79 @@ function vHistory(){
     '<td style="text-align:center">'+resend+'<button class="btn btn-o" style="padding:5px 12px;font-size:11.5px" onclick="event.stopPropagation();openDoc(\''+p.id+'\')">เอกสาร</button></td></tr>';}).join("");
   return '<div style="font-size:12.5px;color:#8a9a92;margin-bottom:10px">คลิกที่รายการเพื่อดูสถานะแบบป็อปอัพ</div><div class="tbl-wrap"><table><thead><tr><th>PR ID</th><th>ประเภท</th><th style="text-align:right">มูลค่า</th><th>สถานะ</th><th style="text-align:center">ใบขอซื้อ</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
 }
-/* status popup (item 4) */
+/* status popup (items 2 & 4) */
+function popupAction(pr){
+  if(USER.role==="User") return "";
+  const b=(fn,label,cls)=>'<button class="btn '+(cls||'btn-p')+'" style="padding:8px 14px;font-size:12px" onclick="closeModal();'+fn+'(\''+pr.id+'\')">'+label+'</button>';
+  if(pr.status==="ยื่นเสนอซื้อ") return b("actAccept","รับเรื่อง")+b("actReject","ส่งกลับแก้ไข","btn-w");
+  if(PROCESS_STATUSES.includes(pr.status)) return b("actProcess",pr.condition==="med"?"อัปเดตผลตรวจ":"ดำเนินการเสร็จ");
+  if(pr.status==="อยู่ระหว่างตรวจสอบ") return b("actPO","อนุมัติ PO");
+  if(pr.status==="อนุมัติใบสั่งซื้อ") return b("actReceive","ตรวจรับ");
+  return "";
+}
+/* บันทึกทุกขั้นตอนลง log จริง (materialize) แล้วเก็บถาวร */
+function backfillLog(pr){
+  const TL=buildTimeline(pr);
+  let changed=false;
+  const newLog=TL.map(e=>{
+    if(e.real) return {t:e.t,by:e.by,at:e.at,note:e.note};
+    changed=true;
+    return {t:e.t,by:"ระบบ (บันทึกย้อนหลัง)",at:pr.at,note:"เติมจากสถานะเดิม",backfilled:true};
+  });
+  if(changed || (pr.log||[]).length!==newLog.length){ pr.log=newLog; return true; }
+  pr.log=newLog; return false;
+}
+/* สร้างไทม์ไลน์เต็มทุกขั้นตอนจากสถานะปัจจุบัน (เติมขั้นที่ log ไม่ได้บันทึกไว้) */
+function buildTimeline(pr){
+  const real=(Array.isArray(pr.log)&&pr.log.length)?pr.log.map(e=>({t:e.t,by:e.by,at:e.at,note:e.note,real:true}))
+    :[{t:"สร้างคำขอซื้อ",by:pr.requester||"",at:pr.at,real:true}];
+  const cond=pr.condition;
+  const procT=cond==="med"?"ส่งตรวจเอกสารเครื่องมือแพทย์":cond==="gt"?"ดำเนินการในระบบ SAP & EGP":"ดำเนินการในระบบ SAP";
+  const canon=[
+    {t:"สร้างคำขอซื้อ",kw:["สร้างคำขอ"]},
+    {t:"พัสดุรับเรื่อง",kw:["รับเรื่อง"]},
+    {t:procT,kw:["ดำเนินการ","เครื่องมือแพทย์","SAP","EGP"]},
+    {t:"อนุมัติใบสั่งซื้อ (PO)",kw:["ใบสั่งซื้อ","PO"]},
+    {t:"ตรวจรับสินค้า",kw:["ตรวจรับ"]}
+  ];
+  const stageByStatus={"ยื่นเสนอซื้อ":1,"กำลังดำเนินการ SAP":2,"กำลังดำเนินการ SAP & EGP":2,"ส่งตรวจเอกสารเครื่องมือแพทย์":2,
+    "อยู่ระหว่างตรวจสอบ":3,"อนุมัติใบสั่งซื้อ":4,"ตรวจรับแล้ว":5,"ต้องการการแก้ไข":1,"ยกเลิก":1};
+  const stage=stageByStatus[pr.status]??1;
+  const result=[]; let ri=0;
+  for(let i=0;i<stage;i++){
+    let mi=-1;
+    for(let j=ri;j<real.length;j++){ if(canon[i].kw.some(k=>String(real[j].t).indexOf(k)>=0)){ mi=j; break; } }
+    if(mi>=0){ for(let j=ri;j<mi;j++) result.push(real[j]); result.push(real[mi]); ri=mi+1; }
+    else { result.push({t:canon[i].t,by:"",at:null,note:"บันทึกย้อนหลังจากสถานะปัจจุบัน",real:false}); }
+  }
+  for(let j=ri;j<real.length;j++) result.push(real[j]);
+  return result;
+}
 function prPopup(id){
-  const pr=findPR(id); if(!pr) return;
+  const pr=findPR(id); if(!pr){ alert("ไม่พบเอกสาร "+id); return; }
   if(!Array.isArray(pr.log)||!pr.log.length) pr.log=[{t:"สร้างคำขอซื้อ",by:pr.requester||"",at:pr.at}];
   const t=totals(pr.items,pr.vatIncl);
-  const tl=pr.log.map((e,i)=>{
-    const d=i>0?dur(new Date(e.at)-new Date(pr.log[i-1].at)):null;
-    return '<div style="display:flex;gap:12px"><div style="display:flex;flex-direction:column;align-items:center"><div style="width:22px;height:22px;border-radius:50%;background:#047857;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px">✓</div>'+(i<pr.log.length-1?'<div style="width:2px;flex:1;background:#cfe9dd;margin:2px 0"></div>':'')+'</div>'+
-    '<div style="flex:1;padding-bottom:12px"><div style="display:flex;justify-content:space-between;gap:6px"><b style="font-size:12.5px">'+esc(e.t)+'</b><span class="mono" style="font-size:10.5px;color:#8a9a92">'+fmtDT(e.at)+'</span></div>'+
-    '<div style="font-size:11.5px;color:#7d8d85;margin-top:2px">'+esc(e.by)+(e.note?' · '+esc(e.note):'')+'</div>'+(d?'<span style="display:inline-block;margin-top:4px;font-size:10px;color:#5b6b64;background:#eef4f1;padding:2px 7px;border-radius:5px">⏱ '+d+'</span>':'')+'</div></div>';}).join("");
-  openModal("สถานะเอกสาร "+id,
-    '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding-bottom:12px;border-bottom:1px solid #eef4f1;margin-bottom:14px">'+
-    '<div><div style="font-size:13px;color:#3d4d45">'+esc(pr.items[0]?pr.items[0].name:"")+(pr.items.length>1?' +'+(pr.items.length-1):'')+'</div>'+
-    '<div style="font-size:12px;color:#8a9a92;margin-top:2px">'+esc(pr.dept)+' · '+fmtB(t.grand)+'</div></div>'+chip(pr.status)+'</div>'+
-    '<div style="max-height:300px;overflow-y:auto">'+tl+'</div>'+
-    '<div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap"><button class="btn btn-o" style="padding:8px 14px;font-size:12px" onclick="closeModal();openDoc(\''+id+'\')">เอกสาร A4</button>'+
-    (pr.status==="ต้องการการแก้ไข"?'<button class="btn btn-p" style="padding:8px 14px;font-size:12px" onclick="closeModal();editPR(\''+id+'\')">แก้ไข &amp; ส่งใหม่</button>':'')+
+  const TL=buildTimeline(pr);
+  const tl=TL.map((e,i)=>{
+    const prev=TL[i-1];
+    const d=(i>0&&e.at&&prev&&prev.at)?dur(new Date(e.at)-new Date(prev.at)):null;
+    const dot='<div style="width:22px;height:22px;border-radius:50%;background:'+(e.real?'#047857':'#b7cabf')+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px">'+(e.real?'✓':'·')+'</div>';
+    return '<div style="display:flex;gap:12px"><div style="display:flex;flex-direction:column;align-items:center">'+dot+(i<TL.length-1?'<div style="width:2px;flex:1;background:#cfe9dd;margin:2px 0"></div>':'')+'</div>'+
+    '<div style="flex:1;padding-bottom:12px"><div style="display:flex;justify-content:space-between;gap:6px"><b style="font-size:12.5px;color:'+(e.real?'#12211b':'#7d8d85')+'">'+esc(e.t)+'</b><span class="mono" style="font-size:10.5px;color:#8a9a92">'+(e.at?fmtDT(e.at):'—')+'</span></div>'+
+    '<div style="font-size:11.5px;color:#7d8d85;margin-top:2px">'+esc(e.by||(e.real?"":"ระบบ"))+(e.note?' · '+esc(e.note):'')+'</div>'+(d?'<span style="display:inline-block;margin-top:4px;font-size:10px;color:#5b6b64;background:#eef4f1;padding:2px 7px;border-radius:5px">⏱ '+d+'</span>':'')+'</div></div>';}).join("");
+  const itemRows=(pr.items||[]).map(it=>'<tr><td style="padding:5px 6px;border-top:1px solid #eef4f1">'+esc(it.name)+'</td><td style="text-align:center;padding:5px 6px;border-top:1px solid #eef4f1">'+it.qty+' '+esc(it.unit||"")+'</td><td style="text-align:right;padding:5px 6px;border-top:1px solid #eef4f1">'+fmtB((it.price||0)*(it.qty||0))+'</td></tr>').join("");
+  openModal("เอกสาร "+id,
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding-bottom:12px;border-bottom:1px solid #eef4f1;margin-bottom:12px">'+
+    '<div><div style="font-size:12px;color:#8a9a92">ผู้ขอซื้อ</div><div style="font-weight:600">'+esc(pr.requester)+'</div>'+
+    '<div style="font-size:12px;color:#8a9a92;margin-top:4px">'+esc(pr.dept)+' · '+esc(pr.procType||"ซื้อ")+' · '+esc(pr.type||"")+(pr.urgency==="เร่งด่วน"?' · <b style="color:#d90429">ด่วน</b>':'')+'</div></div>'+chip(pr.status)+'</div>'+
+    (pr.reason?'<div style="font-size:12.5px;color:#3d4d45;background:#f4f8f6;border-radius:8px;padding:9px 11px;margin-bottom:12px"><b>เหตุผล:</b> '+esc(pr.reason)+'</div>':'')+
+    '<table style="width:100%;font-size:12.5px;border-collapse:collapse;margin-bottom:6px"><thead><tr style="color:#8a9a92;font-size:11px"><th style="text-align:left;padding:4px 6px">รายการ</th><th style="padding:4px 6px">จำนวน</th><th style="text-align:right;padding:4px 6px">รวม</th></tr></thead><tbody>'+itemRows+'</tbody></table>'+
+    '<div style="text-align:right;font-weight:700;font-size:14px;margin-bottom:14px">รวมทั้งสิ้น '+fmtB(t.grand)+'</div>'+
+    '<div style="font-size:12px;color:#8a9a92;font-weight:600;margin-bottom:8px">ไทม์ไลน์สถานะ</div>'+
+    '<div style="max-height:220px;overflow-y:auto">'+tl+'</div>'+
+    '<div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">'+popupAction(pr)+
+    '<button class="btn btn-o" style="padding:8px 14px;font-size:12px" onclick="closeModal();openDoc(\''+id+'\')">📄 ดูเอกสาร</button>'+
+    (pr.status==="ต้องการการแก้ไข"&&(pr.email===USER.email||USER.role!=="User")?'<button class="btn btn-p" style="padding:8px 14px;font-size:12px" onclick="closeModal();editPR(\''+id+'\')">แก้ไข &amp; ส่งใหม่</button>':'')+
     '<button class="btn btn-o" style="padding:8px 14px;font-size:12px" onclick="closeModal();track(\''+id+'\')">ดูแบบเต็ม</button></div>');
   document.getElementById("mOk").style.display="none";
 }
@@ -836,7 +904,7 @@ function vQueue(statuses){
     if(p.status==="อนุมัติใบสั่งซื้อ") return ['<button class="btn btn-p" style="padding:6px 12px;font-size:11.5px" onclick="event.stopPropagation();actReceive(\''+p.id+'\')">ตรวจรับ</button>'];
     return [];
   };
-  const rows=list.map(p=>'<tr class="rowc" onclick="track(\''+p.id+'\')">'+
+  const rows=list.map(p=>'<tr class="rowc" onclick="prPopup(\''+p.id+'\')">'+
     '<td><div class="mono" style="font-weight:600">'+p.id+'</div><div style="font-size:11px;color:#8a9a92">'+fmtDT(p.at)+'</div></td>'+
     '<td><div style="font-weight:500">'+p.requester+'</div><div style="font-size:11px;color:#8a9a92">'+p.dept+'</div></td>'+
     '<td>'+chip(p.status)+'</td><td style="text-align:right;font-weight:600">'+fmtB(totals(p.items,p.vatIncl).grand)+'</td>'+
@@ -905,9 +973,14 @@ function track(id){ state.trackId=id; go("tracking"); }
 function vTracking(){
   const latest=[...DB.prs].sort((a,b)=>new Date(b.at)-new Date(a.at))[0];
   const pr=findPR(state.trackId)||latest;
-  const search='<div class="card" style="margin-bottom:16px;display:flex;gap:12px;flex-wrap:wrap;align-items:end">'+
-    '<div style="flex:2;min-width:200px"><label class="lbl">เลข PR ID</label><input class="in mono" id="trkIn" value="'+(pr?pr.id:"")+'" placeholder="PR-..."></div>'+
-    '<button class="btn btn-p" style="padding:11px 26px" onclick="doTrack()">ค้นหา</button></div>';
+  const search='<div class="card" style="margin-bottom:16px"><div style="display:flex;gap:12px;flex-wrap:wrap;align-items:end">'+
+    '<div style="flex:2;min-width:200px"><label class="lbl">ค้นหาเลขที่เอกสาร (พิมพ์บางส่วนก็ได้)</label><input class="in mono" id="trkIn" value="" placeholder="เช่น 0042 หรือ PR-2569" onkeydown="if(event.key===\'Enter\')doTrack()"></div>'+
+    '<button class="btn btn-p" style="padding:11px 22px" onclick="doTrack()">ค้นหา</button>'+
+    '<button class="btn btn-o" style="padding:11px 18px" onclick="startQRScan()">▣ สแกน QR</button></div>'+
+    '<div id="trkResults" style="margin-top:12px"></div>'+
+    '<div id="qrScanBox" class="hidden" style="margin-top:14px;border-top:1px solid #eef4f1;padding-top:14px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><b style="font-size:13px">📷 สแกน QR Code เลขที่เอกสาร</b><button class="btn btn-w" style="padding:5px 12px;font-size:11.5px" onclick="stopQRScan()">ปิดกล้อง</button></div>'+
+    '<video id="qrVideo" playsinline style="width:100%;max-width:360px;border-radius:12px;background:#000;display:block;margin:0 auto"></video>'+
+    '<div id="qrHint" style="text-align:center;font-size:12px;color:#8a9a92;margin-top:8px">กำลังเปิดกล้อง… หันกล้องไปที่ QR บนเอกสาร</div></div></div>';
   if(!pr) return search+'<div class="card" style="text-align:center;color:#8a9a92;padding:40px">ไม่พบเอกสาร</div>';
   if(!Array.isArray(pr.log)||!pr.log.length) pr.log=[{t:"สร้างคำขอซื้อ",by:pr.requester||"",at:pr.at||new Date().toISOString()}];
   const t=totals(pr.items,pr.vatIncl);
@@ -923,13 +996,15 @@ function vTracking(){
     return '<div style="flex:1;min-width:70px;display:flex;flex-direction:column;align-items:center;text-align:center;position:relative">'+c+
       (i<5?'<div style="position:absolute;top:16px;left:50%;width:100%;height:2px;background:'+(isDone?'#047857':'#e8eeeb')+'"></div>':'')+
       '<div style="font-size:12px;font-weight:600;margin-top:9px;color:'+(isCur?'#d97706':isDone?'#12211b':'#a3b0a9')+'">'+s+'</div></div>';}).join("")+'</div>';
-  const tl=pr.log.map((e,i)=>{
-    const d=i>0?dur(new Date(e.at)-new Date(pr.log[i-1].at)):null;
+  const TL=buildTimeline(pr);
+  const tl=TL.map((e,i)=>{
+    const prev=TL[i-1];
+    const d=(i>0&&e.at&&prev&&prev.at)?dur(new Date(e.at)-new Date(prev.at)):null;
     return '<div style="display:flex;gap:14px"><div style="display:flex;flex-direction:column;align-items:center">'+
-    '<div style="width:26px;height:26px;border-radius:50%;background:#047857;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px">✓</div>'+
-    (i<pr.log.length-1||done<6?'<div style="width:2px;flex:1;background:#cfe9dd;margin:3px 0"></div>':'')+'</div>'+
-    '<div style="flex:1;padding-bottom:14px"><div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px"><b style="font-size:13.5px">'+e.t+'</b><span class="mono" style="font-size:11px;color:#8a9a92">'+fmtDT(e.at)+'</span></div>'+
-    '<div style="font-size:12px;color:#7d8d85;margin-top:3px">'+e.by+(e.note?' · '+e.note:'')+'</div>'+
+    '<div style="width:26px;height:26px;border-radius:50%;background:'+(e.real?'#047857':'#b7cabf')+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px">'+(e.real?'✓':'·')+'</div>'+
+    (i<TL.length-1||done<6?'<div style="width:2px;flex:1;background:#cfe9dd;margin:3px 0"></div>':'')+'</div>'+
+    '<div style="flex:1;padding-bottom:14px"><div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px"><b style="font-size:13.5px;color:'+(e.real?'#12211b':'#7d8d85')+'">'+esc(e.t)+'</b><span class="mono" style="font-size:11px;color:#8a9a92">'+(e.at?fmtDT(e.at):'—')+'</span></div>'+
+    '<div style="font-size:12px;color:#7d8d85;margin-top:3px">'+esc(e.by||(e.real?"":"ระบบ"))+(e.note?' · '+esc(e.note):'')+'</div>'+
     (d?'<div style="display:inline-block;margin-top:6px;font-size:10.5px;color:#5b6b64;background:#eef4f1;padding:3px 8px;border-radius:6px">⏱ ใช้เวลา '+d+'</div>':'')+'</div></div>';}).join("");
   const waiting=done<6&&pr.status!=="ต้องการการแก้ไข"?'<div style="display:flex;gap:14px"><div style="width:26px;height:26px;border-radius:50%;background:#fff;border:2px solid #d97706;box-shadow:0 0 0 3px #fff3e2"></div>'+
     '<div style="flex:1"><b style="font-size:13.5px;color:#d97706">'+STEPS[done]+' (กำลังดำเนินการ)</b>'+
@@ -949,9 +1024,54 @@ function vTracking(){
 }
 function doTrack(){
   const v=document.getElementById("trkIn").value.trim();
-  const p=DB.prs.find(x=>x.id.toLowerCase()===v.toLowerCase());
-  if(p){ state.trackId=p.id; render(); }
-  else { state.trackId=null; content.querySelector(".card:last-child").outerHTML='<div class="card" style="text-align:center;color:#c0392b;padding:40px">ไม่พบเอกสาร "'+v+'"</div>'; }
+  const box=document.getElementById("trkResults");
+  if(!v){ box.innerHTML=""; return; }
+  const q=v.toLowerCase();
+  const hits=DB.prs.filter(x=>String(x.id).toLowerCase().includes(q));
+  if(hits.length===1){ state.trackId=hits[0].id; render(); return; }
+  if(!hits.length){ box.innerHTML='<div style="color:#c0392b;font-size:13px;padding:6px">ไม่พบเอกสารที่ตรงกับ "'+esc(v)+'"</div>'; return; }
+  box.innerHTML='<div style="font-size:12px;color:#8a9a92;margin-bottom:8px">พบ '+hits.length+' รายการ — คลิกเพื่อดู</div>'+
+    '<div style="display:flex;flex-direction:column;gap:6px;max-height:260px;overflow-y:auto">'+hits.slice(0,50).map(p=>
+    '<div class="rowc" style="display:flex;align-items:center;gap:10px;padding:9px 11px;border:1px solid #eef4f1;border-radius:9px" onclick="state.trackId=\''+p.id+'\';render()">'+
+    '<div style="flex:1"><span class="mono" style="font-weight:600">'+p.id+'</span><span style="font-size:11.5px;color:#8a9a92;margin-left:8px">'+esc(p.requester)+' · '+esc(p.dept)+'</span></div>'+chip(p.status)+'</div>').join("")+'</div>';
+}
+/* ---- QR scan (item 4) ---- */
+let _qrStream=null,_qrRAF=null;
+function startQRScan(){
+  const box=document.getElementById("qrScanBox"), video=document.getElementById("qrVideo"), hint=document.getElementById("qrHint");
+  box.classList.remove("hidden");
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){ hint.textContent="อุปกรณ์นี้ไม่รองรับการเปิดกล้อง"; return; }
+  navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}}).then(stream=>{
+    _qrStream=stream; video.srcObject=stream; video.setAttribute("playsinline",true); video.play();
+    if(!window.jsQR){ hint.innerHTML='ตัวอ่าน QR ยังไม่พร้อม — พิมพ์เลขที่เอกสารในช่องด้านบนแทนได้'; return; }
+    const cv=document.createElement("canvas"), ctx=cv.getContext("2d");
+    const tick=()=>{
+      if(!_qrStream) return;
+      if(video.readyState===video.HAVE_ENOUGH_DATA){
+        cv.width=video.videoWidth; cv.height=video.videoHeight;
+        ctx.drawImage(video,0,0,cv.width,cv.height);
+        const img=ctx.getImageData(0,0,cv.width,cv.height);
+        const code=window.jsQR(img.data,img.width,img.height);
+        if(code&&code.data){ onQRDecoded(code.data.trim()); return; }
+      }
+      _qrRAF=requestAnimationFrame(tick);
+    };
+    _qrRAF=requestAnimationFrame(tick);
+  }).catch(()=>{ hint.textContent="ไม่สามารถเข้าถึงกล้อง — โปรดอนุญาตสิทธิ์กล้อง หรือพิมพ์เลขที่เอกสารแทน"; });
+}
+function stopQRScan(){
+  if(_qrRAF) cancelAnimationFrame(_qrRAF); _qrRAF=null;
+  if(_qrStream){ _qrStream.getTracks().forEach(t=>t.stop()); _qrStream=null; }
+  const box=document.getElementById("qrScanBox"); if(box) box.classList.add("hidden");
+}
+function onQRDecoded(data){
+  // ดึงเฉพาะรหัสเอกสารจากข้อความ/URL ที่สแกนได้
+  const m=String(data).match(/PR-[0-9A-Za-z]+-?[0-9]+/i)||[data];
+  const code=m[0];
+  const pr=DB.prs.find(x=>String(x.id).toLowerCase()===code.toLowerCase())||DB.prs.find(x=>String(x.id).toLowerCase().includes(code.toLowerCase()));
+  stopQRScan();
+  if(pr){ prPopup(pr.id); }
+  else { alert("สแกนพบ: "+code+"\nแต่ไม่พบเอกสารนี้ในระบบ"); }
 }
 
 /* ---------- Reports ---------- */
@@ -999,7 +1119,8 @@ function vReports(){
     '<div><label class="lbl">ถึงวันที่</label><input class="in" type="date" value="'+RF.to+'" onchange="setRF(\'to\',this.value)"></div>'+
     '<div><label class="lbl">ค้นหาอิสระ</label><input class="in" value="'+esc(RF.q)+'" placeholder="รหัส/ชื่อ/รายการ" oninput="RF.q=this.value" onchange="setRF(\'q\',this.value)"></div>'+
     '</div><div style="display:flex;justify-content:flex-end;gap:10px;margin-top:12px"><button class="btn btn-o" onclick="clearRF()">ล้างตัวกรอง</button>'+
-    '<button class="btn btn-x" onclick="exportReport()">▤ Export Excel</button>'+
+    '<button class="btn btn-x" onclick="exportReport()">▤ Excel (สรุปใบงาน)</button>'+
+    '<button class="btn btn-x" onclick="exportReportItems()">☰ Excel (แยกรายการสินค้า)</button>'+
     '<button class="btn" style="background:#fdecea;border:1px solid #f3c9c4;color:#c0392b" onclick="window.print()">▦ พิมพ์/PDF</button></div></div>';
   return filt+
     '<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:14px">'+
@@ -1017,6 +1138,21 @@ function exportReport(){
     "มูลค่ารวม":totals(p.items,p.vatIncl).grand,"สถานะ":p.status,"เลข PO":(p.po&&p.po.number)||"","ผู้ขาย":(p.po&&p.po.vendor)||""}));
   const ws=XLSX.utils.json_to_sheet(rows), wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,"Report"); XLSX.writeFile(wb,"PR_Report_"+new Date().toISOString().slice(0,10)+".xlsx");
+}
+function exportReportItems(){
+  if(!window.XLSX)return;
+  const rows=[];
+  reportFiltered().forEach(p=>{
+    (p.items||[]).forEach((it,i)=>{
+      const qty=parseFloat(it.qty)||0, price=parseFloat(it.price)||0;
+      rows.push({"PR_ID":p.id,"วันที่":fmtD(p.at),"หน่วยงาน":p.dept,"ผู้ขอซื้อ":p.requester,"ประเภท":p.type,
+        "ลำดับ":i+1,"รหัส THAMC":it.code||"","ชื่อรายการ":it.name||"","จำนวน":qty,"หน่วย":it.unit||"",
+        "ราคาต่อหน่วย":price,"รวมเป็นเงิน":qty*price,"สถานะเอกสาร":p.status,"เลข PO":(p.po&&p.po.number)||""});
+    });
+  });
+  if(!rows.length){ alert("ไม่มีรายการตามตัวกรอง"); return; }
+  const ws=XLSX.utils.json_to_sheet(rows), wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"Items"); XLSX.writeFile(wb,"PR_Items_"+new Date().toISOString().slice(0,10)+".xlsx");
 }
 
 /* ---------- Users (Admin) ---------- */
@@ -1173,7 +1309,7 @@ async function loadRemote(){
         pass:(u.Password||u["รหัสผ่าน"]||"").toString(),
         name:u.FullName||u.Name||u["ชื่อ-สกุล"]||u["ชื่อ"]||"",pos:u.Position||u["ตำแหน่ง"]||"",
         dept:u.Department||u["หน่วยงาน"]||"",phone:(u.Phone||u["เบอร์"]||"").toString(),
-        role:u.Role||u["บทบาท"]||"User",status:u.Status||u["สถานะ"]||"Active"})).filter(u=>u.email);
+        role:normRole(u.Role||u["บทบาท"]||"User"),status:u.Status||u["สถานะ"]||"Active"})).filter(u=>u.email);
       if(mapped.length){
         // รวมกับบัญชีทดลองเดิม: ชีตมาก่อน, เติม demo ที่ยังไม่มี
         const emails=new Set(mapped.map(u=>u.email));
@@ -1200,6 +1336,9 @@ async function loadRemote(){
     if(Array.isArray(S.ItemTypes)) DB.itemTypes=S.ItemTypes.map(t=>t.TypeName||t["ประเภท"]||Object.values(t)[0]).filter(Boolean);
     if(Array.isArray(S.DataBase)) DB.catalog=S.DataBase.map(d=>({code:d["รหัสสินค้า THAMC"]||d.ThamcCode||"",companyCode:d["รหัสสินค้าบริษัท"]||"",name:d["ชื่อรายการ"]||d.ItemName||"",unit:d["หน่วยนับ"]||d.Unit||"",price:parseFloat(d["ราคาต่อหน่วย"]||d["ราคา"]||d.Price||0)||0})).filter(x=>x.name);
     saveDB(); fillDeptDL();
+    // materialize log ทุกใบที่ยังไม่ครบ แล้ว sync กลับขึ้นชีต
+    (DB.prs||[]).forEach(p=>{ if(backfillLog(p)){ syncStatus(p,"backfill"); } });
+    saveDB();
   }catch(e){ console.warn("โหลดข้อมูลจาก Sheets ไม่สำเร็จ ใช้ข้อมูลในเครื่องแทน:",e.message); }
 }
 loadRemote();
