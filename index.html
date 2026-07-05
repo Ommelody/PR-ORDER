@@ -214,6 +214,7 @@ td{padding:11px 13px;border-top:1px solid #eef4f1}
       <div class="auth-field"><label class="auth-lbl">รหัสผ่าน</label>
         <input class="auth-in" id="liPass" type="password" placeholder="••••••••"></div>
       <button class="auth-btn" onclick="doLogin()">เข้าสู่ระบบ</button>
+      <button id="bioLoginBtn" class="hidden" onclick="loginBiometric()" style="width:100%;margin-top:10px;background:#fff;border:1.5px solid var(--green);color:var(--green);font-weight:700;font-size:14px;padding:12px;border-radius:11px;display:flex;align-items:center;justify-content:center;gap:8px"><span style="font-size:18px">☺</span> เข้าสู่ระบบด้วยใบหน้า / ลายนิ้วมือ</button>
       <div class="auth-msg" id="liMsg"></div>
       <div class="auth-link">ยังไม่มีบัญชี? <b onclick="showAuth('register')">ลงทะเบียนที่นี่</b></div>
       <div class="theme-mini"><button type="button" onclick="toggleThemeMini()">◐ ธีมสี</button><div class="sw-list hidden" id="swList"></div></div>
@@ -396,6 +397,50 @@ function chip(st){ const c=STATUS_CHIP[st]||["-","#666","#eee"]; return '<span c
 let USER=null, state={screen:"dashboard",trackId:null,docId:null};
 function showAuth(w){ loginCard.classList.toggle("hidden",w!=="login"); registerCard.classList.toggle("hidden",w!=="register"); }
 function quick(email){ liEmail.value=email; liPass.value="1234"; doLogin(); }
+/* ---- WebAuthn biometric (Face ID / fingerprint) ---- */
+function bioSupported(){ return !!(window.PublicKeyCredential && navigator.credentials && navigator.credentials.create); }
+function _b64(buf){ return btoa(String.fromCharCode.apply(null,new Uint8Array(buf))); }
+function _fromB64(s){ return Uint8Array.from(atob(s), c=>c.charCodeAt(0)); }
+function bioStore(){ try{ return JSON.parse(localStorage.getItem("thamc_bio")||"{}"); }catch(_){ return {}; } }
+function bioSave(m){ localStorage.setItem("thamc_bio", JSON.stringify(m)); }
+function refreshBioBtn(){ const b=document.getElementById("bioLoginBtn"); if(!b) return; b.classList.toggle("hidden", !(bioSupported() && Object.keys(bioStore()).length>0)); }
+async function registerBiometric(){
+  if(!bioSupported()){ alert("อุปกรณ์นี้ไม่รองรับการยืนยันตัวด้วยใบหน้า/ลายนิ้วมือ"); return; }
+  try{
+    const cred=await navigator.credentials.create({ publicKey:{
+      challenge: crypto.getRandomValues(new Uint8Array(32)),
+      rp:{ name:"THAMC PR ORDER" },
+      user:{ id:new TextEncoder().encode(USER.email), name:USER.email, displayName:USER.name||USER.email },
+      pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],
+      authenticatorSelection:{ authenticatorAttachment:"platform", userVerification:"required", residentKey:"preferred" },
+      timeout:60000, attestation:"none"
+    }});
+    const id=_b64(cred.rawId); const m=bioStore(); m[id]=USER.email; bioSave(m);
+    syncRemote("bindBiometric",{email:USER.email, credId:id});
+    closeModal(); alert("เปิดใช้งานเข้าสู่ระบบด้วยใบหน้า/ลายนิ้วมือสำเร็จ ✓\nครั้งต่อไปบนเครื่องนี้ กดปุ่มบนหน้าล็อกอินได้เลย");
+  }catch(e){ alert("ไม่สำเร็จ หรือถูกยกเลิก: "+(e.message||e)); }
+}
+function unbindBiometric(){
+  const m=bioStore(); Object.keys(m).forEach(id=>{ if(String(m[id]).toLowerCase()===USER.email.toLowerCase()) delete m[id]; });
+  bioSave(m); syncRemote("unbindBiometric",{email:USER.email}); closeModal(); alert("ปิดใช้งานบนเครื่องนี้แล้ว");
+}
+async function loginBiometric(){
+  if(!bioSupported()){ alert("อุปกรณ์นี้ไม่รองรับ"); return; }
+  const m=bioStore(); const ids=Object.keys(m);
+  if(!ids.length){ liMsg.textContent="ยังไม่ได้เปิดใช้บนเครื่องนี้ — เข้าด้วยรหัสผ่านก่อน แล้วเปิดใช้ในเมนูโปรไฟล์"; return; }
+  try{
+    const asr=await navigator.credentials.get({ publicKey:{
+      challenge: crypto.getRandomValues(new Uint8Array(32)),
+      allowCredentials: ids.map(id=>({ type:"public-key", id:_fromB64(id) })),
+      userVerification:"required", timeout:60000
+    }});
+    const email=m[_b64(asr.rawId)];
+    const u=DB.users.find(x=>x.email.toLowerCase()===String(email).toLowerCase());
+    if(!u){ liMsg.textContent="ไม่พบบัญชีที่ผูกไว้บนเครื่องนี้"; return; }
+    if(u.status!=="Active"){ liMsg.textContent="สถานะผู้ใช้: "+u.status; return; }
+    USER=u; USER.role=normRole(u.role); u.role=USER.role; syncRemote("login",{email:u.email,method:"biometric"}); enterApp();
+  }catch(e){ liMsg.textContent="ยืนยันตัวไม่สำเร็จ ลองใหม่ หรือใช้รหัสผ่าน"; }
+}
 function doLogin(){
   const em=liEmail.value.trim().toLowerCase(), pw=liPass.value;
   const u=DB.users.find(x=>x.email.toLowerCase()===em && x.pass===pw);
@@ -436,7 +481,7 @@ function viewVersion(id,idx){ const pr=findPR(id); const v=pr.versions[idx]; if(
     '<table style="width:100%;margin-top:10px;font-size:12px;border-collapse:collapse"><thead><tr style="background:#f4f8f6"><th style="text-align:left;padding:6px">รายการ</th><th style="padding:6px">จำนวน</th><th style="text-align:right;padding:6px">ราคา</th></tr></thead><tbody>'+(s.items||[]).map(it=>'<tr><td style="padding:6px;border-top:1px solid #eef4f1">'+esc(it.name)+'</td><td style="text-align:center;padding:6px;border-top:1px solid #eef4f1">'+it.qty+' '+esc(it.unit||"")+'</td><td style="text-align:right;padding:6px;border-top:1px solid #eef4f1">'+fmtB((it.price||0)*(it.qty||0))+'</td></tr>').join("")+'</tbody></table>');
   document.getElementById("mOk").style.display="none";
 }
-function logout(){ USER=null; app.classList.add("hidden"); auth.classList.remove("hidden"); showAuth("login"); liMsg.textContent=""; }
+function logout(){ USER=null; app.classList.add("hidden"); auth.classList.remove("hidden"); showAuth("login"); liMsg.textContent=""; refreshBioBtn(); }
 function toggleUserMenu(){ document.getElementById("userMenu").classList.toggle("hidden"); }
 function tbUserMenu(){
   openModal("บัญชีของฉัน",
@@ -452,7 +497,11 @@ function openProfile(){
     '<label class="lbl" style="margin-top:10px">ตำแหน่ง</label><input class="in" id="pfPos" value="'+esc(USER.pos||"")+'">'+
     '<div style="display:flex;gap:10px;margin-top:10px"><div style="flex:1"><label class="lbl">หน่วยงาน</label><input class="in" id="pfDept" value="'+esc(USER.dept||"")+'"></div>'+
     '<div style="flex:1"><label class="lbl">เบอร์หน่วยงาน</label><input class="in" id="pfPhone" value="'+esc(USER.phone||"")+'"></div></div>'+
-    '<label class="lbl" style="margin-top:10px">รหัสผ่านใหม่ (เว้นว่างหากไม่เปลี่ยน)</label><input class="in" id="pfPass" type="password" placeholder="••••••">',()=>{
+    '<label class="lbl" style="margin-top:10px">รหัสผ่านใหม่ (เว้นว่างหากไม่เปลี่ยน)</label><input class="in" id="pfPass" type="password" placeholder="••••••">'+
+    (bioSupported()?'<div style="margin-top:16px;border-top:1px solid #eef4f1;padding-top:14px"><div style="font-size:12.5px;color:#5b6b64;margin-bottom:8px">🔒 เข้าสู่ระบบด้วยใบหน้า / ลายนิ้วมือ (เฉพาะเครื่องนี้)</div>'+
+      (Object.values(bioStore()).map(e=>String(e).toLowerCase()).includes(USER.email.toLowerCase())
+        ?'<button type="button" class="btn btn-w" style="width:100%;padding:11px" onclick="unbindBiometric()">✕ ปิดใช้งานบนเครื่องนี้</button>'
+        :'<button type="button" class="btn" style="width:100%;padding:11px;background:var(--green);color:#fff" onclick="registerBiometric()">☺ เปิดใช้งานบนเครื่องนี้</button>')+'</div>':''),()=>{
     USER.name=document.getElementById("pfName").value.trim()||USER.name;
     USER.pos=document.getElementById("pfPos").value.trim();
     USER.dept=document.getElementById("pfDept").value.trim();
@@ -1294,6 +1343,7 @@ buildSwatches();
 applyTheme(localStorage.getItem("thamc_theme")||"emerald");
 showAuth("login");
 fillDeptDL();
+refreshBioBtn();
 
 /* ดึงข้อมูลจริงจากทุกชีท (เมื่อกำหนด WEB_APP_URL แล้ว) */
 async function loadRemote(){
@@ -1309,7 +1359,7 @@ async function loadRemote(){
         pass:(u.Password||u["รหัสผ่าน"]||"").toString(),
         name:u.FullName||u.Name||u["ชื่อ-สกุล"]||u["ชื่อ"]||"",pos:u.Position||u["ตำแหน่ง"]||"",
         dept:u.Department||u["หน่วยงาน"]||"",phone:(u.Phone||u["เบอร์"]||"").toString(),
-        role:normRole(u.Role||u["บทบาท"]||"User"),status:u.Status||u["สถานะ"]||"Active"})).filter(u=>u.email);
+        role:normRole(u.Role||u["บทบาท"]||"User"),status:u.Status||u["สถานะ"]||"Active",bio:String(u.BiometricCredIDs||"").split(",").map(s=>s.trim()).filter(Boolean)})).filter(u=>u.email);
       if(mapped.length){
         // รวมกับบัญชีทดลองเดิม: ชีตมาก่อน, เติม demo ที่ยังไม่มี
         const emails=new Set(mapped.map(u=>u.email));
@@ -1335,7 +1385,9 @@ async function loadRemote(){
     if(Array.isArray(S.Departments)) DB.departments=S.Departments.map(d=>d.DepartmentName||d["หน่วยงาน"]||Object.values(d)[0]).filter(Boolean);
     if(Array.isArray(S.ItemTypes)) DB.itemTypes=S.ItemTypes.map(t=>t.TypeName||t["ประเภท"]||Object.values(t)[0]).filter(Boolean);
     if(Array.isArray(S.DataBase)) DB.catalog=S.DataBase.map(d=>({code:d["รหัสสินค้า THAMC"]||d.ThamcCode||"",companyCode:d["รหัสสินค้าบริษัท"]||"",name:d["ชื่อรายการ"]||d.ItemName||"",unit:d["หน่วยนับ"]||d.Unit||"",price:parseFloat(d["ราคาต่อหน่วย"]||d["ราคา"]||d.Price||0)||0})).filter(x=>x.name);
-    saveDB(); fillDeptDL();
+    saveDB(); fillDeptDL(); refreshBioBtn();
+    // ผูก credential จากชีตเข้ากับ bioStore ในเครื่อง (กรณีเครื่องเดียวใช้หลายบัญชี)
+    try{ const m=bioStore(); (DB.users||[]).forEach(u=>{ (u.bio||[]).forEach(id=>{ if(!m[id]) m[id]=u.email; }); }); bioSave(m); refreshBioBtn(); }catch(_){ }
     // materialize log ทุกใบที่ยังไม่ครบ แล้ว sync กลับขึ้นชีต
     (DB.prs||[]).forEach(p=>{ if(backfillLog(p)){ syncStatus(p,"backfill"); } });
     saveDB();
