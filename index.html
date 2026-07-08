@@ -1190,8 +1190,10 @@ async function brItemProSearch(id){
     liveEl.innerHTML="✓ ค้นหาสดจาก Item Pro สำเร็จ ("+resp.items.length+" รายการ)"; liveEl.style.color="#047857";
   } else if(resp && resp.success){
     liveEl.innerHTML="ไม่พบรายการเพิ่มเติมจากการค้นหาสด (Item Pro)";
+  } else if(resp && resp.error){
+    liveEl.innerHTML="⚠ Item Pro ตอบกลับข้อผิดพลาด: "+esc(resp.error); liveEl.style.color="#c0392b";
   } else {
-    liveEl.innerHTML="⚠ ยังไม่ได้ตั้งค่าการค้นหาแบบสดกับ Item Pro (ITEM_PRO_SEARCH_URL) — แสดงผลจากฐานข้อมูลที่ซิงก์ไว้เท่านั้น"; liveEl.style.color="#b45309";
+    liveEl.innerHTML="⚠ เรียก Web App ไม่สำเร็จ (resp="+esc(JSON.stringify(resp))+") — ตรวจสอบว่า Deploy Code.gs เวอร์ชันล่าสุดแล้วหรือยัง และ CONFIG.WEB_APP_URL ถูกต้อง"; liveEl.style.color="#c0392b";
   }
 }
 function renderItemProHits(hits, id){
