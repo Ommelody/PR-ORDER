@@ -1211,19 +1211,23 @@ function brPickItemProCode(id, code, name){
 function brRequestNewItemProCode(id){
   const b=findBR(id); if(!b) return;
   closeModal();
-  if(CONFIG.ITEM_PRO_URL) window.open(CONFIG.ITEM_PRO_URL, "_blank");
   brRequestCode(id, b.itemName);
-  alert('ส่งคำขอออกรหัสใหม่สำหรับ "'+b.itemName+'" ไปที่ระบบ Item Pro แล้ว\nรหัสใหม่จะขึ้นต้นด้วย 8 ตามมาตรฐาน — เมื่อได้รับรหัสกลับมา ให้กรอกที่ปุ่ม "กรอกรหัสที่ได้รับ"');
 }
-function brRequestCode(id, itemNameOverride){
+async function brRequestCode(id, itemNameOverride){
   const b=findBR(id); if(!b) return;
   if(itemNameOverride) b.itemName=itemNameOverride;
   b.status=BR_PENDING_CODE; b.log.push({t:"ส่งออกรหัสพัสดุ",by:USER.name,at:new Date().toISOString(),note:"รายการ: "+b.itemName});
   saveDB(); syncRemote("brRequestCode",{id,itemName:b.itemName});
-  // ส่ง API ไปที่ระบบ Item Pro จริง (ผ่าน Code.gs — server-to-server เลี่ยงปัญหา CORS)
-  syncRemote("requestItemCode",{itemName:b.itemName, neededDate:b.neededDate||"", brId:id});
   buildNav(); render();
-  alert('ส่งรายการ "'+b.itemName+'" ไปยังโปรแกรมออกรหัสแล้ว (พร้อมวันที่ต้องการใช้งาน)\nเมื่อได้รับรหัสกลับมา ให้กดปุ่ม "กรอกรหัสที่ได้รับ" ที่แถวนี้');
+  // ส่ง API ไปที่ระบบ Item Pro จริง (ผ่าน Code.gs — server-to-server เลี่ยงปัญหา CORS) — รอผลเพื่อยืนยัน
+  const resp=await callAPI("requestItemCode",{itemName:b.itemName, neededDate:b.neededDate||"", brId:id});
+  if(resp && resp.success){
+    alert('✓ ส่งคำขอออกรหัสสำหรับ "'+b.itemName+'" ไปยังระบบ Item Pro สำเร็จ\nเจ้าหน้าที่ Item Pro จะเห็นคำขอ (สถานะ pending) และออกรหัสให้ต่อไป');
+  } else if(resp && resp.error){
+    alert('⚠ ส่งไป Item Pro ไม่สำเร็จ\n\nสาเหตุ: '+resp.error+'\n\n(บันทึกคำขอในระบบ PR แล้ว แต่ยังไม่ถึง Item Pro — โปรดตรวจสอบว่าสร้างตาราง pr_code_requests ใน Supabase แล้ว และ Deploy Code.gs เวอร์ชันล่าสุด)');
+  } else {
+    alert('⚠ เรียก Web App ไม่สำเร็จ (resp='+JSON.stringify(resp)+')\nตรวจสอบว่า Deploy Code.gs เวอร์ชันล่าสุดแล้ว และ CONFIG.WEB_APP_URL ถูกต้อง');
+  }
 }
 function brCodeArrivedModal(id){
   const b=findBR(id); if(!b) return;
