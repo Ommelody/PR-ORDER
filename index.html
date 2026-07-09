@@ -95,6 +95,8 @@ body.collapsed .sb-title,body.collapsed .nav-label,body.collapsed .nav-badge,bod
 .nav-item.active{background:var(--green-m);color:#fff;font-weight:600}
 .nav-ic{width:20px;text-align:center;flex-shrink:0;font-size:15px}
 .nav-badge{margin-left:auto;background:#d97706;color:#fff;font-size:10.5px;font-weight:600;padding:1px 7px;border-radius:10px}
+.nav-section{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.42);font-weight:700;padding:12px 12px 4px;white-space:nowrap}
+body.collapsed .nav-section{opacity:0;height:6px;padding:0;overflow:hidden}
 body.collapsed .nav-item{justify-content:center;padding:11px 0}
 .sb-logout{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:11px;background:rgba(220,38,38,.22);color:#fecaca;font-size:13px;margin-bottom:8px;white-space:nowrap;width:100%}
 body.collapsed .sb-logout{justify-content:center}
@@ -307,6 +309,7 @@ function saveDB(){ localStorage.setItem(LS_KEY, JSON.stringify(DB)); }
 function ensureSchema(){
   if(!Array.isArray(DB.brs)) DB.brs=[];
   if(!DB.brSeq) DB.brSeq={ym:"",n:0};
+  if(!DB.settings) DB.settings={budgetThreshold:500000,leadDaysLow:45,leadDaysHigh:120};
   if(!Array.isArray(DB.catalog) || !DB.catalog.length){
     DB.catalog=[
       {code:"MED-0231",companyCode:"",name:"ชุดเครื่องมือผ่าตัดพื้นฐาน",unit:"ชุด",price:45000},
@@ -582,10 +585,12 @@ function openProfile(){
     const ini=USER.name.trim().slice(0,2); sbName.textContent=USER.name; sbRole.textContent=roleTH(USER.role)+" · "+USER.dept; sbAva.textContent=ini; tbAva.textContent=ini;
     closeModal(); },"บันทึก");
 }
-function roleTH(r){ return {User:"ผู้ขอซื้อ",Staff:"เจ้าหน้าที่พัสดุ",Admin:"ผู้ดูแลระบบ"}[r]||r; }
+function roleTH(r){ return {User:"ผู้ขอซื้อ",Staff:"เจ้าหน้าที่พัสดุ",Exec:"ผู้บริหาร",Budget:"เจ้าหน้าที่งบประมาณ",Admin:"ผู้ดูแลระบบ"}[r]||r; }
 function normRole(r){
   const s=String(r||"").trim().toLowerCase();
   if(s==="admin"||s==="ผู้ดูแลระบบ"||s==="ผู้ดูแล") return "Admin";
+  if(s==="exec"||s==="executive"||s==="ผู้บริหาร"||s==="หัวหน้าหน่วยงาน"||s==="หัวหน้า"||s==="ผู้อนุมัติ"||s==="approver"||s==="director"||s==="ผู้จัดการ") return "Exec";
+  if(s==="budget"||s==="เจ้าหน้าที่งบประมาณ"||s==="งบประมาณ"||s==="การเงิน"||s==="finance") return "Budget";
   if(s==="staff"||s==="เจ้าหน้าที่พัสดุ"||s==="เจ้าหน้าที่"||s==="พัสดุ") return "Staff";
   return "User";
 }
@@ -594,28 +599,36 @@ function normRole(r){
 const MENU_DEFS = {
   home:{ic:"📢",t:"ประกาศ/ข่าวสาร",title:"ประกาศ / ข่าวสาร"},
   dashboard:{ic:"◱",t:"ภาพรวม",title:"ภาพรวมระบบจัดซื้อ"},
-  newbr:{ic:"฿",t:"ขออนุมัติงบประมาณ",title:"ขออนุมัติงบประมาณ"},
-  budgetApproval:{ic:"☑",t:"พิจารณางบประมาณ",title:"พิจารณาคำของบประมาณ (ผู้บริหาร)",count:()=>(DB.brs||[]).filter(b=>b.status===BR_PENDING_EXEC).length},
-  budgetAlloc:{ic:"▤",t:"จัดสรรงบประมาณ",title:"จัดสรรงบประมาณ",count:()=>(DB.brs||[]).filter(b=>[BR_PENDING_ALLOC,BR_PENDING_CODE,BR_PENDING_ACK].includes(b.status)).length},
-  newpr:{ic:"＋",t:"สร้างใบขอซื้อ",title:"สร้างใบขอซื้อ"},
-  history:{ic:"▤",t:"รายการของฉัน",title:"รายการของฉัน"},
-  approvals:{ic:"☰",t:"รอรับเรื่อง",title:"รายการรอตรวจสอบ (รับเรื่อง)",count:()=>DB.prs.filter(p=>p.status==="ยื่นเสนอซื้อ").length},
-  process:{ic:"⚙",t:"กำลังดำเนินการ",title:"รายการกำลังดำเนินการ (SAP / EGP / เครื่องมือแพทย์)",count:()=>DB.prs.filter(p=>PROCESS_STATUSES.includes(p.status)).length},
-  po:{ic:"✓",t:"รออนุมัติ PO",title:"รายการรออนุมัติ PO",count:()=>DB.prs.filter(p=>p.status==="อยู่ระหว่างตรวจสอบ").length},
-  receive:{ic:"▣",t:"รอตรวจรับ",title:"รายการรอตรวจรับสินค้า",count:()=>DB.prs.filter(p=>p.status==="อนุมัติใบสั่งซื้อ").length},
+  newbr:{ic:"฿",t:"ขออนุมัติงบประมาณ",title:"ขออนุมัติงบประมาณ",group:"budget"},
+  budgetApproval:{ic:"☑",t:"พิจารณางบประมาณ",title:"พิจารณาคำของบประมาณ (ผู้บริหาร)",group:"budget",count:()=>(DB.brs||[]).filter(b=>b.status===BR_PENDING_EXEC).length},
+  budgetAlloc:{ic:"▤",t:"จัดสรรงบประมาณ",title:"จัดสรรงบประมาณ",group:"budget",count:()=>(DB.brs||[]).filter(b=>[BR_PENDING_ALLOC,BR_PENDING_CODE,BR_PENDING_ACK].includes(b.status)).length},
+  newpr:{ic:"＋",t:"สร้างใบขอซื้อ",title:"สร้างใบขอซื้อ",group:"proc"},
+  history:{ic:"▤",t:"รายการของฉัน",title:"รายการของฉัน",group:"proc"},
+  approvals:{ic:"☰",t:"รอรับเรื่อง",title:"รายการรอตรวจสอบ (รับเรื่อง)",group:"proc",count:()=>DB.prs.filter(p=>p.status==="ยื่นเสนอซื้อ").length},
+  process:{ic:"⚙",t:"กำลังดำเนินการ",title:"รายการกำลังดำเนินการ (SAP / EGP / เครื่องมือแพทย์)",group:"proc",count:()=>DB.prs.filter(p=>PROCESS_STATUSES.includes(p.status)).length},
+  po:{ic:"✓",t:"รออนุมัติ PO",title:"รายการรออนุมัติ PO",group:"proc",count:()=>DB.prs.filter(p=>p.status==="อยู่ระหว่างตรวจสอบ").length},
+  receive:{ic:"▣",t:"รอตรวจรับ",title:"รายการรอตรวจรับสินค้า",group:"proc",count:()=>DB.prs.filter(p=>p.status==="อนุมัติใบสั่งซื้อ").length},
   tracking:{ic:"◷",t:"ติดตามสถานะ",title:"ติดตามสถานะเอกสาร"},
   reports:{ic:"▥",t:"รายงาน",title:"รายงาน"},
   users:{ic:"◎",t:"จัดการผู้ใช้งาน",title:"จัดการผู้ใช้งาน",count:()=>DB.users.filter(u=>u.status==="Pending").length}
 };
+const GROUP_LABEL={budget:"ขั้นตอนงบประมาณ",proc:"ขั้นตอนจัดซื้อ"};
 const ROLE_MENUS = {
   User:  ["home","newbr","newpr","history","tracking"],
+  Exec:  ["home","dashboard","newbr","budgetApproval","tracking","reports"],
+  Budget:["home","dashboard","newbr","budgetAlloc","tracking","reports"],
   Staff: ["home","dashboard","newbr","budgetAlloc","newpr","approvals","process","po","receive","tracking","reports"],
   Admin: ["home","dashboard","newbr","budgetApproval","budgetAlloc","newpr","approvals","process","po","receive","tracking","reports","users"]
 };
 function buildNav(){
-  const keys=ROLE_MENUS[USER.role];
+  const keys=ROLE_MENUS[USER.role]||ROLE_MENUS.User;
+  let lastGroup=null;
   navList.innerHTML=keys.map(k=>{const m=MENU_DEFS[k];const c=m.count?m.count():0;
-    return '<button class="nav-item" data-k="'+k+'" onclick="go(\''+k+'\')"><span class="nav-ic">'+m.ic+'</span><span class="nav-label">'+m.t+'</span>'+(c?'<span class="nav-badge">'+c+'</span>':'')+'</button>';}).join("");
+    const g=m.group||null; let hdr="";
+    if(g!==lastGroup && g && GROUP_LABEL[g]){ hdr='<div class="nav-section">'+GROUP_LABEL[g]+'</div>'; }
+    else if(g!==lastGroup && !g && lastGroup){ hdr='<div class="nav-section" style="opacity:0"> </div>'; }
+    lastGroup=g;
+    return hdr+'<button class="nav-item" data-k="'+k+'" onclick="go(\''+k+'\')"><span class="nav-ic">'+m.ic+'</span><span class="nav-label">'+m.t+'</span>'+(c?'<span class="nav-badge">'+c+'</span>':'')+'</button>';}).join("");
   bottomNav.innerHTML=keys.slice(0,5).map(k=>{const m=MENU_DEFS[k];
     return '<button class="bn-item" data-k="'+k+'" onclick="go(\''+k+'\')"><span class="i">'+m.ic+'</span>'+m.t+'</button>';}).join("");
   document.querySelectorAll(".nav-item,.bn-item").forEach(b=>b.classList.toggle("active",b.dataset.k===state.screen));
@@ -641,7 +654,7 @@ function openModal(title, bodyHTML, onOk, okText){
   _mOk=onOk; modal.classList.add("show");
 }
 function closeModal(){ modal.classList.remove("show"); _mOk=null; }
-mOk_init: document.getElementById("mOk").onclick=()=>{ if(_mOk)_mOk(); };
+mOk_init: document.getElementById("mOk").onclick=()=>{ try{ if(_mOk)_mOk(); }catch(e){ console.error(e); alert("เกิดข้อผิดพลาด: "+(e&&e.message||e)); } };
 
 /* ================= RENDER ================= */
 function render(){
@@ -757,6 +770,41 @@ function drillStatus(status){ RF={dept:"",type:"",status:status||"",from:"",to:"
 function drillType(type){ RF={dept:"",type:type||"",status:"",from:"",to:"",q:""}; go("reports"); }
 function drillDept(dept){ RF={dept:dept||"",type:"",status:"",from:"",to:"",q:""}; go("reports"); }
 function vDashboard(){
+  const tabs='<div style="display:flex;gap:8px;margin-bottom:16px;background:#eef4f1;padding:4px;border-radius:10px;width:fit-content">'+
+    [["proc","จัดซื้อ (PR)"],["budget","งบประมาณ (BR)"]].map(([k,l])=>'<button onclick="setDashTab(\''+k+'\')" style="padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;border:0;cursor:pointer;'+(_dashTab===k?'background:#fff;color:var(--green-d);box-shadow:0 1px 4px rgba(0,0,0,.1)':'background:transparent;color:#7d8d85')+'">'+l+'</button>').join('')+'</div>';
+  return tabs + (_dashTab==="budget" ? vBudgetDashboard() : vProcDashboard());
+}
+let _dashTab="proc";
+function setDashTab(t){ _dashTab=t; render(); }
+function vBudgetDashboard(){
+  const brs=DB.brs||[];
+  const t=brs.reduce((s,b)=>s+(b.value||0),0);
+  const cnt=st=>brs.filter(b=>b.status===st).length;
+  const notYetPR = brs.filter(b=>b.status===BR_DONE && !b.prId);
+  const S=DB.settings||{budgetThreshold:500000,leadDaysLow:45,leadDaysHigh:120};
+  const today=new Date();
+  const notYetRows = notYetPR.length ? notYetPR.map(b=>{
+    let dueBadge="";
+    if(b.prDueBy){
+      const due=new Date(b.prDueBy); const daysLeft=Math.ceil((due-today)/86400000);
+      const overdue=daysLeft<0;
+      dueBadge='<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;background:'+(overdue?'#fdecea':daysLeft<=14?'#fff3e2':'#e3f4ea')+';color:'+(overdue?'#c0392b':daysLeft<=14?'#b45309':'#047857')+'">'+(overdue?'เลยกำหนด '+Math.abs(daysLeft)+' วัน':'ควรทำ PR ภายใน '+daysLeft+' วัน')+'</span>';
+    }
+    return '<div class="rowc" style="display:flex;align-items:center;gap:12px;padding:11px 12px;border:1px solid #eef4f1;border-radius:10px;margin-bottom:8px" onclick="brPopup(\''+b.id+'\')">'+
+    '<div style="flex:1;min-width:0"><div class="mono" style="font-weight:600">'+b.id+'</div><div style="font-size:12px;color:#5b6b64">'+esc(b.itemName)+' · '+esc(b.dept)+' · '+fmtB(b.value)+'</div></div>'+dueBadge+
+    (b.email===USER.email||USER.role!=="User"?'<button class="btn btn-p" style="padding:6px 14px;font-size:12px" onclick="event.stopPropagation();copyBRtoPR(\''+b.id+'\')">Copy to PR →</button>':'')+'</div>';
+  }).join("") : '<div style="text-align:center;color:#8a9a92;padding:24px;font-size:13px">ไม่มีรายการที่จัดสรรงบแล้วรอทำ PR ✓</div>';
+  return '<div class="grid k4" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px">'+
+    '<div class="card"><div style="font-size:12px;color:#7d8d85">คำของบทั้งหมด</div><div style="font-size:22px;font-weight:700">'+brs.length+'</div></div>'+
+    '<div class="card"><div style="font-size:12px;color:#7d8d85">รอผู้บริหารพิจารณา</div><div style="font-size:22px;font-weight:700;color:#b45309">'+cnt(BR_PENDING_EXEC)+'</div></div>'+
+    '<div class="card"><div style="font-size:12px;color:#7d8d85">รอจัดสรร/ออกรหัส</div><div style="font-size:22px;font-weight:700;color:#0369a1">'+(cnt(BR_PENDING_ALLOC)+cnt(BR_PENDING_CODE)+cnt(BR_PENDING_ACK))+'</div></div>'+
+    '<div class="card"><div style="font-size:12px;color:#7d8d85">มูลค่ารวม</div><div style="font-size:22px;font-weight:700;color:var(--green)">'+fmtB(t)+'</div></div></div>'+
+    '<div class="card" style="border:1px solid #ffe0b3;background:#fffdf6">'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><b style="font-size:14px">⚠ จัดสรรงบแล้ว แต่ยังไม่ทำ PR ('+notYetPR.length+')</b>'+
+    '<span style="font-size:11px;color:#8a9a92">เกณฑ์: ≤'+fmtB(S.budgetThreshold)+' ภายใน '+S.leadDaysLow+' วัน · เกิน '+fmtB(S.budgetThreshold)+' ภายใน '+S.leadDaysHigh+' วัน (ก่อนวันที่ต้องการใช้)</span></div>'+
+    notYetRows+'</div>';
+}
+function vProcDashboard(){
   const prs=DB.prs, t=prs.reduce((s,p)=>s+totals(p.items,p.vatIncl).grand,0);
   const cnt=st=>prs.filter(p=>p.status===st).length;
   const recentList=[...prs].sort((a,b)=>new Date(b.at)-new Date(a.at)).slice(0,6);
@@ -1051,6 +1099,8 @@ function vNewBR(){
     '<div class="card"><div style="font-weight:600;border-bottom:1px solid #eef4f1;padding-bottom:10px;margin-bottom:14px">📋 แบบฟอร์มขออนุมัติงบประมาณ</div>'+
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">'+
     '<div style="grid-column:span 2"><label class="lbl">ชื่อรายการ <b style="color:#ef4444">*</b></label><input class="in" id="brItemName" placeholder="เช่น เครื่องวัดออกซิเจนปลายนิ้ว"></div>'+
+    '<div><label class="lbl">หน่วยงานที่เสนอขอ <b style="color:#ef4444">*</b></label><select class="in" id="brDept">'+(function(){const list=(DB.departments&&DB.departments.length)?DB.departments:[USER.dept];const uniq=[...new Set([USER.dept].concat(list))].filter(Boolean);return uniq.map(d=>'<option'+(d===USER.dept?' selected':'')+'>'+esc(d)+'</option>').join("");})()+'</select></div>'+
+    '<div><label class="lbl">รหัสครุภัณฑ์ (ถ้าทราบ)</label><input class="in" id="brAssetCode" placeholder="เว้นว่างถ้ายังไม่ทราบ"></div>'+
     '<div style="grid-column:span 2"><label class="lbl">เหตุผลความจำเป็น <b style="color:#ef4444">*</b></label><textarea class="in" id="brReason" rows="3" placeholder="อธิบายเหตุผลและความจำเป็น"></textarea></div>'+
     '<div><label class="lbl">จำนวน <b style="color:#ef4444">*</b></label><input class="in" id="brQty" type="number" min="1" value="1"></div>'+
     '<div><label class="lbl">หน่วยนับ <b style="color:#ef4444">*</b></label><input class="in" id="brUnit" placeholder="เช่น ชิ้น/เครื่อง/ชุด"></div>'+
@@ -1074,9 +1124,9 @@ function submitBR(){
   const hit=(DB.catalog||[]).find(c=>c.name.trim()===name);
   const brId=nextBrId();
   const attachName=brId+"-ใบขออนุมัติงบประมาณ.pdf";
-  const br={ id:brId, at:new Date().toISOString(), requester:USER.name, email:USER.email, dept:USER.dept,
+  const br={ id:brId, at:new Date().toISOString(), requester:USER.name, email:USER.email, dept:(document.getElementById("brDept")?document.getElementById("brDept").value:USER.dept)||USER.dept,
     itemName:name, reason, qty, unit, value, fiscalYear:document.getElementById("brFY").value, neededDate:brDate.value||"", files:[attachName].concat(files),
-    hasCode: !!hit, code: hit?hit.code:"", status:BR_PENDING_EXEC,
+    hasCode: !!(hit||(document.getElementById("brAssetCode")&&document.getElementById("brAssetCode").value.trim())), code: hit?hit.code:((document.getElementById("brAssetCode")&&document.getElementById("brAssetCode").value.trim())||""), status:BR_PENDING_EXEC,
     log:[{t:"สร้างคำของบประมาณ",by:USER.name,at:new Date().toISOString()}] };
   DB.brs.unshift(br); saveDB(); syncRemote("submitBR",{br}); buildNav();
   openBRDoc(br.id);
@@ -1100,6 +1150,7 @@ function vBudgetApproval(){
      : '<div class="card" style="text-align:center;color:#8a9a92;padding:40px">ไม่มีคำขอรอพิจารณา ✓</div>');
 }
 function brApprove(id){
+  if(USER.role!=="Admin"&&USER.role!=="Exec"){ alert("เฉพาะผู้บริหาร/ผู้ดูแลระบบเท่านั้นที่อนุมัติงบประมาณได้"); return; }
   const b=findBR(id); if(!b) return;
   openModal("อนุมัติงบประมาณ "+id,
     '<div style="font-size:13px;color:#5b6b64;margin-bottom:10px">'+esc(b.itemName)+' · '+fmtB(b.value)+' · '+esc(b.requester)+'</div>'+
@@ -1110,6 +1161,7 @@ function brApprove(id){
     closeModal(); buildNav(); render(); },"อนุมัติ");
 }
 function brReject(id){
+  if(USER.role!=="Admin"&&USER.role!=="Exec"){ alert("เฉพาะผู้บริหาร/ผู้ดูแลระบบเท่านั้นที่ดำเนินการนี้ได้"); return; }
   const b=findBR(id); if(!b) return;
   openModal("ไม่อนุมัติงบประมาณ "+id,
     '<div style="font-size:13px;color:#5b6b64;margin-bottom:10px">'+esc(b.itemName)+' · '+fmtB(b.value)+' · '+esc(b.requester)+'</div>'+
@@ -1144,20 +1196,35 @@ function brAllocateModal(id){
   openModal("จัดสรรงบประมาณ "+id,
     '<div style="font-size:13px;color:#5b6b64;margin-bottom:12px">'+esc(b.requester)+' · '+esc(b.dept)+' · '+fmtB(b.value)+'</div>'+
     dl+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">'+
+    '<div><label class="lbl">ประเภทงบประมาณ <b style="color:#ef4444">*</b></label><select class="in" id="allocBudgetType"><option value="ครุภัณฑ์"'+(b.budgetType==="ครุภัณฑ์"?' selected':'')+'>ครุภัณฑ์</option><option value="ปรับปรุง"'+(b.budgetType==="ปรับปรุง"?' selected':'')+'>ปรับปรุง</option><option value="อื่นๆ"'+(b.budgetType==="อื่นๆ"?' selected':'')+'>อื่นๆ</option></select></div>'+
+    '<div><label class="lbl">ชื่องบประมาณ <b style="color:#ef4444">*</b></label><input class="in" id="allocBudgetName" value="'+esc(b.budgetName||"")+'" placeholder="เช่น งบลงทุนปี 2569"></div></div>'+
     '<label class="lbl">ชื่อรายการ (ตรวจสอบ/แก้ไขให้ตรงฐานข้อมูล) <b style="color:#ef4444">*</b></label>'+
     '<input class="in" id="allocName" list="brCatalogDL" value="'+esc(b.itemName)+'" oninput="allocCheckCode()">'+
     '<label class="lbl" style="margin-top:10px">รหัส THAMC</label><input class="in" id="allocCode" value="'+esc(b.code||"")+'" placeholder="พิมพ์ชื่อด้านบนเพื่อค้นหารหัสอัตโนมัติ">'+
     '<div id="allocHint" style="font-size:12px;color:#8a9a92;margin-top:8px"></div>'+
-    '<button type="button" class="btn" style="width:100%;margin-top:12px;padding:11px;background:#f59e0b;color:#fff;font-weight:700" onclick="brItemProSearch(\''+id+'\')">🔗 ส่งออกรหัส (ค้นหาใน Item Pro)</button>',()=>{
+    '<button type="button" class="btn" style="width:100%;margin-top:12px;padding:11px;background:#0369a1;color:#fff;font-weight:700" onclick="brItemProSearch(\''+id+'\')">🔍 ตรวจสอบรหัสจาก Item Pro</button>',()=>{
+    const btype=document.getElementById("allocBudgetType").value, bname=document.getElementById("allocBudgetName").value.trim();
     const name=document.getElementById("allocName").value.trim(), code=document.getElementById("allocCode").value.trim();
-    if(!name){ return; }
+    if(!bname){ alert("กรุณาระบุชื่องบประมาณ"); return; }
+    if(!name){ alert("กรุณาระบุชื่อรายการ"); return; }
+    b.budgetType=btype; b.budgetName=bname;
     if(!code){ closeModal(); brRequestCode(id, name); return; }
     b.itemName=name; b.code=code; b.hasCode=true; b.status=BR_DONE;
-    b.log.push({t:"จัดสรรงบประมาณ",by:USER.name,at:new Date().toISOString(),note:"รหัส "+code});
-    saveDB(); syncRemote("brAllocate",{id,itemName:name,code});
-    pushNotif(b.email,"คำของบประมาณ "+id+" ได้รับการจัดสรรงบแล้ว (รหัส "+code+") — กดดูรายละเอียดเพื่อทำ PR ต่อได้เลย");
+    b.log.push({t:"จัดสรรงบประมาณ",by:USER.name,at:new Date().toISOString(),note:"รหัส "+code+" · งบ"+btype+": "+bname});
+    applyBRDueReminder(b);
+    saveDB(); syncRemote("brAllocate",{id,itemName:name,code,budgetType:btype,budgetName:bname,prDueBy:b.prDueBy||""});
+    pushNotif(b.email,"คำของบประมาณ "+id+" ได้รับการจัดสรรงบแล้ว (รหัส "+code+") — กดดูรายละเอียดเพื่อทำ PR ต่อได้เลย"+(b.prDueBy?" (ควรทำ PR ภายในวันที่ "+fmtD(b.prDueBy)+")":""));
     closeModal(); buildNav(); render(); },"ยืนยันจัดสรรงบ");
   setTimeout(allocCheckCode,50);
+}
+function applyBRDueReminder(b){
+  if(!b.neededDate) return;
+  const S=DB.settings||{budgetThreshold:500000,leadDaysLow:45,leadDaysHigh:120};
+  const leadDays = b.value>S.budgetThreshold ? S.leadDaysHigh : S.leadDaysLow;
+  const due=new Date(b.neededDate); due.setDate(due.getDate()-leadDays);
+  b.prDueBy=due.toISOString().slice(0,10);
+  b.prDueLeadDays=leadDays;
 }
 function allocCheckCode(){
   const nameEl=document.getElementById("allocName"), codeEl=document.getElementById("allocCode"), hint=document.getElementById("allocHint");
@@ -1178,7 +1245,7 @@ async function brItemProSearch(id){
     '<div id="itemProLive" style="font-size:12px;color:#8a9a92;margin-top:10px">🔄 กำลังค้นหาแบบสดจากระบบ Item Pro…</div>'+
     '<div style="margin-top:14px;padding-top:14px;border-top:1px solid #eef4f1">'+
     '<div style="font-size:12px;color:#8a9a92;margin-bottom:8px">ไม่พบรายการที่ต้องการ?</div>'+
-    '<button type="button" class="btn" style="width:100%;padding:11px;background:#f59e0b;color:#fff;font-weight:700" onclick="brRequestNewItemProCode(\''+id+'\')">🔗 แจ้งขอออกรหัสใหม่ที่ Item Pro</button></div>');
+    '<button type="button" class="btn" style="width:100%;padding:11px;background:#f59e0b;color:#fff;font-weight:700" onclick="brRequestNewItemProCode(\''+id+'\')">📤 ส่งออกรหัส (แจ้ง Item Pro ออกรหัสใหม่)</button></div>');
   document.getElementById("mOk").style.display="none";
   const resp=await callAPI("searchItemPro",{query:b.itemName});
   const liveEl=document.getElementById("itemProLive");
@@ -1305,9 +1372,9 @@ function brPopup(id){
   }).join("");
   let action="";
   if(USER.role==="Admin" && b.status===BR_PENDING_EXEC) action='<button class="btn btn-p" style="padding:8px 14px;font-size:12px" onclick="brApprove(\''+id+'\')">อนุมัติ</button><button class="btn btn-w" style="padding:8px 14px;font-size:12px" onclick="brReject(\''+id+'\')">ไม่อนุมัติ</button>';
-  else if(USER.role!=="User" && b.status===BR_PENDING_ALLOC) action='<button class="btn btn-p" style="padding:8px 14px;font-size:12px" onclick="brAllocateModal(\''+id+'\')">ตรวจสอบ/จัดสรรงบ</button>';
-  else if(USER.role!=="User" && b.status===BR_PENDING_CODE) action='<button class="btn btn-x" style="padding:8px 14px;font-size:12px" onclick="brCodeArrivedModal(\''+id+'\')">กรอกรหัสที่ได้รับ</button>';
-  else if(USER.role!=="User" && b.status===BR_PENDING_ACK) action='<button class="btn btn-p" style="padding:8px 14px;font-size:12px" onclick="brAck(\''+id+'\')">รับทราบ</button>';
+  else if((USER.role==="Admin"||USER.role==="Budget"||USER.role==="Staff") && b.status===BR_PENDING_ALLOC) action='<button class="btn btn-p" style="padding:8px 14px;font-size:12px" onclick="brAllocateModal(\''+id+'\')">ตรวจสอบ/จัดสรรงบ</button>';
+  else if((USER.role==="Admin"||USER.role==="Budget"||USER.role==="Staff") && b.status===BR_PENDING_CODE) action='<button class="btn btn-x" style="padding:8px 14px;font-size:12px" onclick="brCodeArrivedModal(\''+id+'\')">กรอกรหัสที่ได้รับ</button>';
+  else if((USER.role==="Admin"||USER.role==="Budget"||USER.role==="Staff") && b.status===BR_PENDING_ACK) action='<button class="btn btn-p" style="padding:8px 14px;font-size:12px" onclick="brAck(\''+id+'\')">รับทราบ</button>';
   const canCopy = b.status===BR_DONE && (b.email===USER.email || USER.role!=="User");
   openModal("คำขออนุมัติงบประมาณ "+id,
     '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding-bottom:12px;border-bottom:1px solid #eef4f1;margin-bottom:12px">'+
@@ -1674,9 +1741,24 @@ function vUsers(){
     }
     return '<tr '+(u.status==="Pending"?'style="background:#fffdf6"':'')+'><td class="mono" style="color:#3d4d45">'+u.email+'</td><td style="font-weight:500">'+u.name+'</td><td>'+u.dept+'</td>'+
     '<td><select class="in" style="padding:5px 8px;font-size:12px;min-width:120px" onchange="setRole(\''+u.email+'\',this.value)">'+
-      ['User','Staff','Admin'].map(rr=>'<option value="'+rr+'"'+(u.role===rr?' selected':'')+'>'+roleTH(rr)+'</option>').join('')+'</select></td>'+
+      ['User','Staff','Exec','Budget','Admin'].map(rr=>'<option value="'+rr+'"'+(u.role===rr?' selected':'')+'>'+roleTH(rr)+'</option>').join('')+'</select></td>'+
     '<td><span class="chip" style="color:'+c[1]+';background:'+c[2]+'">'+c[0]+'</span></td><td style="text-align:center">'+act+'</td></tr>';}).join("");
-  return '<div class="tbl-wrap"><table><thead><tr><th>ผู้ใช้ (อีเมล)</th><th>ชื่อ-สกุล</th><th>หน่วยงาน</th><th>บทบาท</th><th>สถานะ</th><th style="text-align:center">การจัดการ</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  const S=DB.settings||{budgetThreshold:500000,leadDaysLow:45,leadDaysHigh:120};
+  const settingsCard='<div class="card" style="margin-bottom:16px"><div style="font-weight:600;margin-bottom:12px">⚙ ตั้งค่าการแจ้งเตือนทำ PR หลังจัดสรรงบ (Admin)</div>'+
+    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">'+
+    '<div><label class="lbl">เกณฑ์วงเงิน (บาท)</label><input class="in" id="setThreshold" type="number" value="'+S.budgetThreshold+'"></div>'+
+    '<div><label class="lbl">ไม่เกินเกณฑ์ — ต้องทำ PR ภายใน (วัน)</label><input class="in" id="setLeadLow" type="number" value="'+S.leadDaysLow+'"></div>'+
+    '<div><label class="lbl">เกินเกณฑ์ — ต้องทำ PR ภายใน (วัน)</label><input class="in" id="setLeadHigh" type="number" value="'+S.leadDaysHigh+'"></div></div>'+
+    '<div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="btn btn-p" style="padding:9px 20px" onclick="saveBudgetSettings()">บันทึกการตั้งค่า</button></div></div>';
+  return settingsCard+'<div class="tbl-wrap"><table><thead><tr><th>ผู้ใช้ (อีเมล)</th><th>ชื่อ-สกุล</th><th>หน่วยงาน</th><th>บทบาท</th><th>สถานะ</th><th style="text-align:center">การจัดการ</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+}
+function saveBudgetSettings(){
+  const threshold=parseFloat(document.getElementById("setThreshold").value)||500000;
+  const leadDaysLow=parseInt(document.getElementById("setLeadLow").value)||45;
+  const leadDaysHigh=parseInt(document.getElementById("setLeadHigh").value)||120;
+  DB.settings={budgetThreshold:threshold,leadDaysLow,leadDaysHigh};
+  saveDB(); syncRemote("saveSettings",{settings:DB.settings});
+  alert("บันทึกการตั้งค่าแล้ว");
 }
 function setUser(email,status){
   const u=DB.users.find(x=>x.email===email); if(!u)return;
@@ -1893,6 +1975,10 @@ async function loadRemote(){
     }
     // dropdowns จากชีต (item 2): Departments, ItemTypes, DataBase (catalog)
     if(Array.isArray(S.Departments)) DB.departments=S.Departments.map(d=>d.DepartmentName||d["หน่วยงาน"]||Object.values(d)[0]).filter(Boolean);
+    if(Array.isArray(S.Settings) && S.Settings.length){
+      const kv={}; S.Settings.forEach(r=>{ kv[r.Key]=r.Value; });
+      DB.settings={ budgetThreshold:parseFloat(kv.budgetThreshold)||500000, leadDaysLow:parseInt(kv.leadDaysLow)||45, leadDaysHigh:parseInt(kv.leadDaysHigh)||120 };
+    }
     if(Array.isArray(S.ItemTypes)) DB.itemTypes=S.ItemTypes.map(t=>t.TypeName||t["ประเภท"]||Object.values(t)[0]).filter(Boolean);
     if(Array.isArray(S.DataBase)) DB.catalog=S.DataBase.map(d=>({code:d["รหัสสินค้า THAMC"]||d.ThamcCode||"",companyCode:d["รหัสสินค้าบริษัท"]||"",name:d["ชื่อรายการ"]||d.ItemName||"",unit:d["หน่วยนับ"]||d.Unit||"",price:parseFloat(d["ราคาต่อหน่วย"]||d["ราคา"]||d.Price||0)||0})).filter(x=>x.name);
     saveDB(); fillDeptDL(); refreshBioBtn();
