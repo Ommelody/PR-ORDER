@@ -183,6 +183,7 @@ td{padding:11px 13px;border-top:1px solid #eef4f1}
   .prdoc{box-shadow:none!important;margin:0!important}
   .no-print{display:none!important}
 }
+@keyframes pulseGlow{0%,100%{opacity:1}50%{opacity:.55}}
 </style>
 </head>
 <body>
@@ -413,6 +414,13 @@ function nextBrId(){
   DB.brSeq.n++; return "BR-"+ym+"-"+String(DB.brSeq.n).padStart(4,"0");
 }
 function findBR(id){ return (DB.brs||[]).find(b=>b.id===id); }
+function dedupeById(arr){
+  const seen=new Map();
+  arr.forEach(x=>seen.set(x.id,x));
+  const uniq=[...seen.values()];
+  arr.length=0; arr.push(...uniq);
+  return arr;
+}
 function nextPrId(){
   const d=new Date(), ym=String(d.getFullYear())+String(d.getMonth()+1).padStart(2,"0");
   if(DB.seq.ym!==ym){ DB.seq.ym=ym; DB.seq.n=0; }
@@ -662,9 +670,16 @@ function render(){
     process:()=>vQueue(PROCESS_STATUSES),
     po:()=>vQueue(["อยู่ระหว่างตรวจสอบ"]),receive:()=>vQueue(["อนุมัติใบสั่งซื้อ"]),
     tracking:vTracking,reports:vReports,users:vUsers,document:vDocument,brDocument:vBRDocument,announceEdit:function(){renderAnnounceEditor();return content.innerHTML;}}[state.screen];
-  content.innerHTML=f?f():""; 
+  try{
+    content.innerHTML=f?f():"";
+  }catch(e){
+    console.error("render error:",e);
+    content.innerHTML='<div class="card" style="text-align:center;padding:40px;color:#c0392b"><b>เกิดข้อผิดพลาดขณะแสดงผลหน้านี้</b><div style="margin-top:8px;font-size:12.5px;color:#8a9a92">'+esc(e&&e.message||String(e))+'</div>'+
+      '<button class="btn btn-o" style="margin-top:14px;padding:9px 20px" onclick="location.reload()">🔄 โหลดหน้าใหม่</button></div>';
+  }
   if(state.screen==="document") drawQR();
   if(state.screen==="brDocument") drawBRQR();
+  if(state.screen==="budgetAlloc") checkPendingCodeBadges();
   if(state.screen==="newpr" && !document.querySelector("#itemsBody tr")) addItemRow();
 }
 
@@ -775,9 +790,29 @@ function vDashboard(){
   return tabs + (_dashTab==="budget" ? vBudgetDashboard() : vProcDashboard());
 }
 let _dashTab="proc";
+let _dashFilter={dept:"",from:"",to:""};
 function setDashTab(t){ _dashTab=t; render(); }
+function setDashFilter(k,v){ _dashFilter[k]=v; render(); }
+function clearDashFilter(){ _dashFilter={dept:"",from:"",to:""}; render(); }
+function filterByDash(list){
+  return list.filter(x=>{
+    if(_dashFilter.dept && x.dept!==_dashFilter.dept) return false;
+    if(_dashFilter.from && new Date(x.at)<new Date(_dashFilter.from)) return false;
+    if(_dashFilter.to){ const e=new Date(_dashFilter.to); e.setHours(23,59,59,999); if(new Date(x.at)>e) return false; }
+    return true;
+  });
+}
+function dashFilterBar(){
+  const depts=[...new Set(DB.prs.map(p=>p.dept).concat((DB.brs||[]).map(b=>b.dept)).filter(Boolean))].sort();
+  return '<div class="card" style="margin-bottom:16px"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;align-items:end">'+
+    '<div><label class="lbl">หน่วยงาน</label><select class="in" onchange="setDashFilter(\'dept\',this.value)">'+
+    '<option value="">ทั้งหมด</option>'+depts.map(d=>'<option'+(d===_dashFilter.dept?' selected':'')+'>'+esc(d)+'</option>').join("")+'</select></div>'+
+    '<div><label class="lbl">ตั้งแต่วันที่</label><input class="in" type="date" value="'+_dashFilter.from+'" onchange="setDashFilter(\'from\',this.value)"></div>'+
+    '<div><label class="lbl">ถึงวันที่</label><input class="in" type="date" value="'+_dashFilter.to+'" onchange="setDashFilter(\'to\',this.value)"></div>'+
+    '<div><button class="btn btn-o" style="width:100%" onclick="clearDashFilter()">ล้างตัวกรอง</button></div></div></div>';
+}
 function vBudgetDashboard(){
-  const brs=DB.brs||[];
+  const brs=filterByDash(DB.brs||[]);
   const t=brs.reduce((s,b)=>s+(b.value||0),0);
   const cnt=st=>brs.filter(b=>b.status===st).length;
   const notYetPR = brs.filter(b=>b.status===BR_DONE && !b.prId);
@@ -794,18 +829,25 @@ function vBudgetDashboard(){
     '<div style="flex:1;min-width:0"><div class="mono" style="font-weight:600">'+b.id+'</div><div style="font-size:12px;color:#5b6b64">'+esc(b.itemName)+' · '+esc(b.dept)+' · '+fmtB(b.value)+'</div></div>'+dueBadge+
     (b.email===USER.email||USER.role!=="User"?'<button class="btn btn-p" style="padding:6px 14px;font-size:12px" onclick="event.stopPropagation();copyBRtoPR(\''+b.id+'\')">Copy to PR →</button>':'')+'</div>';
   }).join("") : '<div style="text-align:center;color:#8a9a92;padding:24px;font-size:13px">ไม่มีรายการที่จัดสรรงบแล้วรอทำ PR ✓</div>';
-  return '<div class="grid k4" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px">'+
+  const byDept={}; notYetPR.forEach(b=>{ byDept[b.dept]=(byDept[b.dept]||0)+1; });
+  const deptEntries=Object.entries(byDept).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const maxD=Math.max(1,...deptEntries.map(x=>x[1]));
+  const deptChart = deptEntries.length ? deptEntries.map(([k,v])=>'<div class="rowc" style="margin-bottom:11px;padding:2px 4px;border-radius:6px" onclick="setDashFilter(\'dept\',\''+esc(k)+'\')"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:#3d4d45">'+esc(k)+'</span><b>'+v+' รายการ</b></div><div style="height:8px;background:#eef4f1;border-radius:4px"><div style="width:'+Math.round(v/maxD*100)+'%;height:8px;background:#d97706;border-radius:4px"></div></div></div>').join("")
+    : '<div style="color:#8a9a92;font-size:12px;text-align:center;padding:16px">ไม่มีหน่วยงานค้างเปิด PR ✓</div>';
+  return dashFilterBar()+'<div class="grid k4" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px">'+
     '<div class="card"><div style="font-size:12px;color:#7d8d85">คำของบทั้งหมด</div><div style="font-size:22px;font-weight:700">'+brs.length+'</div></div>'+
     '<div class="card"><div style="font-size:12px;color:#7d8d85">รอผู้บริหารพิจารณา</div><div style="font-size:22px;font-weight:700;color:#b45309">'+cnt(BR_PENDING_EXEC)+'</div></div>'+
     '<div class="card"><div style="font-size:12px;color:#7d8d85">รอจัดสรร/ออกรหัส</div><div style="font-size:22px;font-weight:700;color:#0369a1">'+(cnt(BR_PENDING_ALLOC)+cnt(BR_PENDING_CODE)+cnt(BR_PENDING_ACK))+'</div></div>'+
     '<div class="card"><div style="font-size:12px;color:#7d8d85">มูลค่ารวม</div><div style="font-size:22px;font-weight:700;color:var(--green)">'+fmtB(t)+'</div></div></div>'+
+    '<div class="grid c2" style="grid-template-columns:1fr 1fr;margin-bottom:16px">'+
+    '<div class="card"><b style="font-size:14px;display:block;margin-bottom:14px">หน่วยงานที่ค้างเปิด PR (Top 5)</b>'+deptChart+'</div>'+
     '<div class="card" style="border:1px solid #ffe0b3;background:#fffdf6">'+
-    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><b style="font-size:14px">⚠ จัดสรรงบแล้ว แต่ยังไม่ทำ PR ('+notYetPR.length+')</b>'+
-    '<span style="font-size:11px;color:#8a9a92">เกณฑ์: ≤'+fmtB(S.budgetThreshold)+' ภายใน '+S.leadDaysLow+' วัน · เกิน '+fmtB(S.budgetThreshold)+' ภายใน '+S.leadDaysHigh+' วัน (ก่อนวันที่ต้องการใช้)</span></div>'+
-    notYetRows+'</div>';
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><b style="font-size:14px">⚠ จัดสรรงบแล้ว แต่ยังไม่ทำ PR ('+notYetPR.length+')</b></div>'+
+    '<div style="font-size:11px;color:#8a9a92;margin-bottom:10px">เกณฑ์: ≤'+fmtB(S.budgetThreshold)+' ภายใน '+S.leadDaysLow+' วัน · เกิน '+fmtB(S.budgetThreshold)+' ภายใน '+S.leadDaysHigh+' วัน (ก่อนวันที่ต้องการใช้)</div>'+
+    notYetRows+'</div></div>';
 }
 function vProcDashboard(){
-  const prs=DB.prs, t=prs.reduce((s,p)=>s+totals(p.items,p.vatIncl).grand,0);
+  const prs=filterByDash(DB.prs), t=prs.reduce((s,p)=>s+totals(p.items,p.vatIncl).grand,0);
   const cnt=st=>prs.filter(p=>p.status===st).length;
   const recentList=[...prs].sort((a,b)=>new Date(b.at)-new Date(a.at)).slice(0,6);
   const recent=renderRecent(recentList);
@@ -828,7 +870,7 @@ function vProcDashboard(){
   const deptEntries=Object.entries(byDept).sort((a,b)=>b[1]-a[1]).slice(0,5);
   const maxD=Math.max(1,...deptEntries.map(x=>x[1]));
   const deptBars=deptEntries.map(([k,v])=>'<div class="rowc" style="margin-bottom:11px;padding:2px 4px;border-radius:6px" onclick="drillDept(\''+esc(k)+'\')"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:#3d4d45">'+esc(k)+'</span><b>'+fmtB(v)+'</b></div><div style="height:8px;background:#eef4f1;border-radius:4px"><div style="width:'+Math.round(v/maxD*100)+'%;height:8px;background:var(--green);border-radius:4px"></div></div></div>').join("");
-  return '<div style="background:linear-gradient(135deg,var(--green-d),var(--green-m));border-radius:16px;padding:22px 24px 56px;color:#fff">'+
+  return dashFilterBar()+'<div style="background:linear-gradient(135deg,var(--green-d),var(--green-m));border-radius:16px;padding:22px 24px 56px;color:#fff">'+
     '<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px"><div>'+
     '<div class="mono" style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.7);font-weight:600">THAMC Central Supply</div>'+
     '<div style="font-size:14px;color:rgba(255,255,255,.82);margin-top:8px">มูลค่าขอซื้อรวมในระบบ</div><div style="font-size:28px;font-weight:700">'+fmtB(t)+'</div></div>'+
@@ -904,7 +946,7 @@ function addItemRow(){
   const nameIn=tr.querySelector(".it-name");
   nameIn.addEventListener("change",function(){
     if(!DB.catalog) return;
-    const hit=DB.catalog.find(c=>c.name===nameIn.value);
+    const hit=DB.catalog.find(c=>String(c.name||"")===nameIn.value);
     if(hit){ tr.querySelector(".it-code").value=hit.code||""; if(hit.unit)tr.querySelector(".it-unit").value=hit.unit; if(hit.price)tr.querySelector(".it-price").value=hit.price; recalc(); }
   });
 }
@@ -956,7 +998,7 @@ function submitPR(){
     state.pendingBRLink=null;
   }
   syncRemote("submitPR",{pr}); buildNav();
-  openDoc(pr.id);
+  showSubmitSuccess("ส่งใบเสนอซื้อ", pr.id, ()=>openDoc(pr.id));
 }
 let _editId=null;
 function editPR(id){
@@ -1077,7 +1119,7 @@ function prPopup(id){
     '<div style="font-size:12px;color:#8a9a92;font-weight:600;margin-bottom:8px">ไทม์ไลน์สถานะ</div>'+
     '<div style="max-height:220px;overflow-y:auto">'+tl+'</div>'+
     '<div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">'+popupAction(pr)+
-    (pr.brId?'<button class="btn btn-o" style="padding:8px 14px;font-size:12px;color:#0369a1;border-color:#bfe0f5" onclick="closeModal();openBRDoc(\''+pr.brId+'\')">๟ ใบขออนุมัติงบประมาณ</button>':'')+
+    (pr.brId?'<button class="btn btn-o" style="padding:8px 14px;font-size:12px;color:#0369a1;border-color:#bfe0f5" onclick="closeModal();openBRDoc(\''+pr.brId+'\')">๟ ใบเสนอจัดสรรงบประมาณ</button>':'')+
     '<button class="btn btn-o" style="padding:8px 14px;font-size:12px" onclick="closeModal();openDoc(\''+id+'\')">📄 ดูเอกสาร</button>'+
     (pr.status==="ต้องการการแก้ไข"&&(pr.email===USER.email||USER.role!=="User")?'<button class="btn btn-p" style="padding:8px 14px;font-size:12px" onclick="closeModal();editPR(\''+id+'\')">แก้ไข &amp; ส่งใหม่</button>':'')+
     '<button class="btn btn-o" style="padding:8px 14px;font-size:12px" onclick="closeModal();track(\''+id+'\')">ดูแบบเต็ม</button></div>');
@@ -1121,15 +1163,15 @@ function submitBR(){
   if(!unit){ msg.textContent="กรุณาระบุหน่วยนับ"; return; }
   if(!value||value<=0){ msg.textContent="กรุณาระบุมูลค่างาน"; return; }
   const files=[...(brFiles.files||[])].map(f=>f.name);
-  const hit=(DB.catalog||[]).find(c=>c.name.trim()===name);
+  const hit=(DB.catalog||[]).find(c=>String(c.name||"").trim()===name);
   const brId=nextBrId();
-  const attachName=brId+"-ใบขออนุมัติงบประมาณ.pdf";
+  const attachName=brId+"-ใบเสนอพิจารณาจัดสรรงบประมาณ.pdf";
   const br={ id:brId, at:new Date().toISOString(), requester:USER.name, email:USER.email, dept:(document.getElementById("brDept")?document.getElementById("brDept").value:USER.dept)||USER.dept,
     itemName:name, reason, qty, unit, value, fiscalYear:document.getElementById("brFY").value, neededDate:brDate.value||"", files:[attachName].concat(files),
     hasCode: !!(hit||(document.getElementById("brAssetCode")&&document.getElementById("brAssetCode").value.trim())), code: hit?hit.code:((document.getElementById("brAssetCode")&&document.getElementById("brAssetCode").value.trim())||""), status:BR_PENDING_EXEC,
     log:[{t:"สร้างคำของบประมาณ",by:USER.name,at:new Date().toISOString()}] };
   DB.brs.unshift(br); saveDB(); syncRemote("submitBR",{br}); buildNav();
-  openBRDoc(br.id);
+  showSubmitSuccess("ส่งคำขออนุมัติงบประมาณ", br.id, ()=>openBRDoc(br.id));
 }
 function vBudgetApproval(){
   const list=(DB.brs||[]).filter(b=>b.status===BR_PENDING_EXEC).sort((a,b)=>new Date(a.at)-new Date(b.at));
@@ -1176,7 +1218,7 @@ function vBudgetAlloc(){
   const rows=list.map(b=>{
     let action="";
     if(b.status===BR_PENDING_ALLOC) action='<button class="btn btn-p" style="padding:6px 12px;font-size:11.5px" onclick="event.stopPropagation();brAllocateModal(\''+b.id+'\')">ตรวจสอบ/จัดสรรงบ</button>';
-    else if(b.status===BR_PENDING_CODE) action='<button class="btn btn-x" style="padding:6px 12px;font-size:11.5px" onclick="event.stopPropagation();brCodeArrivedModal(\''+b.id+'\')">กรอกรหัสที่ได้รับ</button>';
+    else if(b.status===BR_PENDING_CODE) action='<button class="btn btn-x" id="codeBtn-'+b.id+'" style="padding:6px 12px;font-size:11.5px" onclick="event.stopPropagation();brCodeArrivedModal(\''+b.id+'\')">กรอกรหัสที่ได้รับ</button><span id="codeBadge-'+b.id+'"></span>';
     else if(b.status===BR_PENDING_ACK) action='<button class="btn btn-p" style="padding:6px 12px;font-size:11.5px" onclick="event.stopPropagation();brAck(\''+b.id+'\')">รับทราบ</button>';
     return '<tr class="rowc" onclick="brPopup(\''+b.id+'\')">'+
       '<td><div class="mono" style="font-weight:600">'+b.id+'</div><div style="font-size:11px;color:#8a9a92">'+fmtD(b.at)+'</div></td>'+
@@ -1189,6 +1231,18 @@ function vBudgetAlloc(){
     ((USER.role!=="User")?'<button class="btn btn-x" onclick="exportBRSap()">▤ Export Excel to SAP</button>':'')+'</div>'+
     (list.length?'<div class="tbl-wrap"><table><thead><tr><th>BR ID</th><th>รายการ</th><th>ผู้ขอ</th><th style="text-align:right">มูลค่า</th><th>สถานะ</th><th style="text-align:center">ดำเนินการ</th></tr></thead><tbody>'+rows+'</tbody></table></div>'
      : '<div class="card" style="text-align:center;color:#8a9a92;padding:40px">ไม่มีรายการรอจัดสรรงบ ✓</div>');
+}
+function checkPendingCodeBadges(){
+  const pending=(DB.brs||[]).filter(b=>b.status===BR_PENDING_CODE);
+  pending.forEach(async(b)=>{
+    const resp=await callAPI("pollItemPro",{prRef:b.id});
+    const badge=document.getElementById("codeBadge-"+b.id), btn=document.getElementById("codeBtn-"+b.id);
+    if(!badge) return; // เปลี่ยนหน้าไปแล้ว
+    if(resp && resp.success && resp.issued){
+      badge.innerHTML='<span style="display:inline-block;margin-left:6px;font-size:10.5px;font-weight:700;color:#047857;background:#e3f4ea;padding:2px 8px;border-radius:20px;animation:pulseGlow 1.6s ease-in-out infinite">✓ มีรหัสแล้ว</span>';
+      if(btn){ btn.style.background="#047857"; btn.textContent="กรอกรหัส (พร้อมแล้ว!)"; }
+    }
+  });
 }
 function brAllocateModal(id){
   const b=findBR(id); if(!b) return;
@@ -1229,7 +1283,7 @@ function applyBRDueReminder(b){
 function allocCheckCode(){
   const nameEl=document.getElementById("allocName"), codeEl=document.getElementById("allocCode"), hint=document.getElementById("allocHint");
   if(!nameEl) return;
-  const hit=(DB.catalog||[]).find(c=>c.name.trim()===nameEl.value.trim());
+  const hit=(DB.catalog||[]).find(c=>String(c.name||"").trim()===nameEl.value.trim());
   if(hit){ codeEl.value=hit.code||""; hint.innerHTML='✓ พบรหัสในฐานข้อมูล: <b style="color:#047857">'+esc(hit.code)+'</b>'; hint.style.color="#047857"; }
   else { hint.textContent="ไม่พบรายการนี้ในฐานข้อมูลรหัส — หากยืนยันจัดสรรโดยไม่กรอกรหัส ระบบจะส่งเรื่องไปออกรหัสก่อน"; hint.style.color="#b45309"; }
 }
@@ -1289,12 +1343,36 @@ async function brRequestCode(id, itemNameOverride){
   // ส่ง API ไปที่ระบบ Item Pro จริง (ผ่าน Code.gs — server-to-server เลี่ยงปัญหา CORS) — รอผลเพื่อยืนยัน
   const resp=await callAPI("requestItemCode",{itemName:b.itemName, neededDate:b.neededDate||"", brId:id});
   if(resp && resp.success){
-    alert('✓ ส่งคำขอออกรหัสสำหรับ "'+b.itemName+'" ไปยังระบบ Item Pro สำเร็จ\nเจ้าหน้าที่ Item Pro จะเห็นคำขอ (สถานะ pending) และออกรหัสให้ต่อไป');
+    showInfoModal("✓ ส่งคำขอออกรหัสสำเร็จ","success",
+      '<div style="font-size:13.5px;color:#3d4d45">ส่งคำขอออกรหัสสำหรับ<br><b>"'+esc(b.itemName)+'"</b><br>ไปยังระบบ Item Pro สำเร็จ</div>'+
+      '<div style="font-size:12px;color:#8a9a92;margin-top:10px">เจ้าหน้าที่ Item Pro จะเห็นคำขอ (สถานะ pending) และออกรหัสให้ต่อไป — เมื่อออกรหัสเสร็จ ปุ่ม "กรอกรหัสที่ได้รับ" ที่รายการนี้จะขึ้นสถานะพร้อมกรอกให้อัตโนมัติ</div>');
   } else if(resp && resp.error){
-    alert('⚠ ส่งไป Item Pro ไม่สำเร็จ\n\nสาเหตุ: '+resp.error+'\n\n(บันทึกคำขอในระบบ PR แล้ว แต่ยังไม่ถึง Item Pro — โปรดตรวจสอบว่าสร้างตาราง pr_code_requests ใน Supabase แล้ว และ Deploy Code.gs เวอร์ชันล่าสุด)');
+    showInfoModal("⚠ ส่งไป Item Pro ไม่สำเร็จ","error",
+      '<div style="font-size:13.5px;color:#3d4d45">รายการ: <b>'+esc(b.itemName)+'</b></div>'+
+      '<div style="font-size:12.5px;color:#c0392b;margin-top:8px;background:#fdecea;padding:9px 11px;border-radius:8px">สาเหตุ: '+esc(resp.error)+'</div>'+
+      '<div style="font-size:12px;color:#8a9a92;margin-top:10px">บันทึกคำขอในระบบ PR แล้ว แต่ยังไม่ถึง Item Pro — โปรดตรวจสอบว่าสร้างตาราง pr_code_requests ใน Supabase แล้ว และ Deploy Code.gs เวอร์ชันล่าสุด</div>');
   } else {
-    alert('⚠ เรียก Web App ไม่สำเร็จ (resp='+JSON.stringify(resp)+')\nตรวจสอบว่า Deploy Code.gs เวอร์ชันล่าสุดแล้ว และ CONFIG.WEB_APP_URL ถูกต้อง');
+    showInfoModal("⚠ เรียก Web App ไม่สำเร็จ","error",
+      '<div style="font-size:12.5px;color:#c0392b;background:#fdecea;padding:9px 11px;border-radius:8px;word-break:break-all">resp = '+esc(JSON.stringify(resp))+'</div>'+
+      '<div style="font-size:12px;color:#8a9a92;margin-top:10px">ตรวจสอบว่า Deploy Code.gs เวอร์ชันล่าสุดแล้ว และ CONFIG.WEB_APP_URL ถูกต้อง</div>');
   }
+}
+function showSubmitSuccess(label, id, viewFn){
+  openModal(label+"สำเร็จ",
+    '<div style="text-align:center;padding:10px 0">'+
+    '<div style="width:56px;height:56px;border-radius:50%;background:#e3f4ea;color:#047857;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 14px;font-weight:700">✓</div>'+
+    '<div style="font-size:13px;color:#5b6b64;margin-bottom:6px">'+label+'สำเร็จ เลขที่เอกสารของท่านคือ</div>'+
+    '<div class="mono" style="font-size:26px;font-weight:800;color:var(--green-d);letter-spacing:.02em">'+id+'</div>'+
+    '<div style="font-size:12px;color:#8a9a92;margin-top:10px">ใช้เลขนี้อ้างอิงในการติดตามสถานะได้ทุกเมื่อ</div></div>',
+    ()=>{ closeModal(); viewFn(); }, "ดูเอกสาร →");
+}
+function showInfoModal(title, tone, bodyHtml){
+  const c={success:["#e3f4ea","#047857","✓"],error:["#fdecea","#c0392b","⚠"],info:["#e0f2fe","#0369a1","ℹ"]}[tone]||["#eef4f1","#5b6b64","ℹ"];
+  openModal(title,
+    '<div style="text-align:center;padding:6px 0 4px">'+
+    '<div style="width:52px;height:52px;border-radius:50%;background:'+c[0]+';color:'+c[1]+';display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 14px;font-weight:700">'+c[2]+'</div>'+
+    bodyHtml+'</div>');
+  document.getElementById("mOk").style.display="none";
 }
 function brCodeArrivedModal(id){
   const b=findBR(id); if(!b) return;
@@ -1388,7 +1466,7 @@ function brPopup(id){
     '<div style="font-size:12px;color:#8a9a92;font-weight:600;margin-bottom:8px">ไทม์ไลน์</div>'+
     '<div style="max-height:220px;overflow-y:auto">'+tl+'</div>'+
     '<div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">'+action+
-    '<button class="btn btn-o" style="padding:8px 14px;font-size:12px" onclick="closeModal();openBRDoc(\''+id+'\')">📄 ใบขออนุมัติงบ</button>'+
+    '<button class="btn btn-o" style="padding:8px 14px;font-size:12px" onclick="closeModal();openBRDoc(\''+id+'\')">📄 ใบเสนอจัดสรรงบ</button>'+
     (linkedPR?'<button class="btn btn-o" style="padding:8px 14px;font-size:12px" onclick="closeModal();prPopup(\''+linkedPR.id+'\')">ดู PR '+linkedPR.id+'</button>':'')+
     (canCopy?'<button class="btn" style="padding:8px 14px;font-size:12px;background:var(--green);color:#fff;font-weight:700" onclick="copyBRtoPR(\''+id+'\')">Copy to PR →</button>':'')+'</div>');
   document.getElementById("mOk").style.display="none";
@@ -1528,7 +1606,7 @@ function vTracking(){
     '<div style="font-size:12px;color:#8a9a92;margin-top:8px">เวลาดำเนินการรวม '+tot+'</div>'+
     '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px;flex-wrap:wrap">'+
     '<button class="btn btn-o" style="padding:6px 12px;font-size:11.5px" onclick="openDoc(\''+pr.id+'\')">🖨 ใบเสนอความต้องการซื้อ</button>'+
-    (pr.brId?'<button class="btn btn-o" style="padding:6px 12px;font-size:11.5px;color:#0369a1;border-color:#bfe0f5" onclick="openBRDoc(\''+pr.brId+'\')">฿ ใบขออนุมัติงบ</button>':'')+
+    (pr.brId?'<button class="btn btn-o" style="padding:6px 12px;font-size:11.5px;color:#0369a1;border-color:#bfe0f5" onclick="openBRDoc(\''+pr.brId+'\')">฿ ใบเสนอจัดสรรงบ</button>':'')+
     (USER.role!=="User"?'<button class="btn btn-x" style="padding:6px 12px;font-size:11.5px" onclick="exportSAP(\''+pr.id+'\')">▤ ดึง Excel ทำ PR (SAP)</button>':'')+'</div></div></div>'+
     stepper+'<div>'+tl+waiting+'</div></div>';
 }
@@ -1557,7 +1635,7 @@ function vTrackingBRCard(b){
     '<div style="font-size:12px;color:#8a9a92;margin-top:2px">ผู้ขอ: '+esc(b.requester)+'</div></div>'+
     '<div style="text-align:right">'+chip(b.status)+
     '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px;flex-wrap:wrap">'+action+
-    '<button class="btn btn-o" style="padding:6px 12px;font-size:11.5px" onclick="openBRDoc(\''+b.id+'\')">📄 ใบขออนุมัติงบ</button>'+
+    '<button class="btn btn-o" style="padding:6px 12px;font-size:11.5px" onclick="openBRDoc(\''+b.id+'\')">📄 ใบเสนอจัดสรรงบ</button>'+
     (canCopy?'<button class="btn" style="padding:6px 12px;font-size:11.5px;background:var(--green);color:#fff;font-weight:700" onclick="copyBRtoPR(\''+b.id+'\')">Copy to PR →</button>':'')+
     '</div></div></div>'+
     '<div>'+tl+'</div></div>';
@@ -1824,7 +1902,7 @@ function drawQR(){
   }catch(e){}
 }
 /* ---------- BR (\u0e02\u0e2d\u0e2d\u0e19\u0e38\u0e21\u0e31\u0e15\u0e34\u0e07\u0e1a\u0e1b\u0e23\u0e30\u0e21\u0e32\u0e13) A4 Document ---------- */
-function openBRDoc(id){ state.brDocId=id; state.screen="brDocument"; pageTitle.textContent="\u0e43\u0e1a\u0e02\u0e2d\u0e2d\u0e19\u0e38\u0e21\u0e31\u0e15\u0e34\u0e07\u0e1a\u0e1b\u0e23\u0e30\u0e21\u0e32\u0e13";
+function openBRDoc(id){ state.brDocId=id; state.screen="brDocument"; pageTitle.textContent="ใบเสนอพิจารณาจัดสรรงบประมาณ";
   document.querySelectorAll(".nav-item,.bn-item").forEach(b=>b.classList.remove("active")); toggleDrawer(false); render(); }
 function vBRDocument(){
   const b=findBR(state.brDocId); if(!b) return '<div class="card">\u0e44\u0e21\u0e48\u0e1e\u0e1a\u0e40\u0e2d\u0e01\u0e2a\u0e32\u0e23</div>';
@@ -1838,7 +1916,7 @@ function vBRDocument(){
     '<div style="display:flex;gap:10px"><div><div id="brqrbox" style="width:70px;height:70px;border:1px solid #ddd;flex-shrink:0"></div></div>'+
     '<div style="font-size:12.5px;line-height:1.6;padding-top:2px"><div style="font-weight:700">\u0e17\u0e35\u0e48 '+b.id+'</div><div>\u0e27\u0e31\u0e19\u0e17\u0e35\u0e48 '+fmtLong(b.at)+'</div></div></div>'+
     '<div style="border:1px solid #000;padding:6px 10px;font-size:11.5px;line-height:1.7;width:250px">\u0e41\u0e1c\u0e19\u0e01\u0e07\u0e1a\u0e1b\u0e23\u0e30\u0e21\u0e32\u0e13 \u0e23\u0e31\u0e1a\u0e17\u0e35\u0e48................<br>\u0e27\u0e31\u0e19\u0e17\u0e35\u0e48................ \u0e40\u0e27\u0e25\u0e32................</div></div>'+
-    '<div style="text-align:center;font-size:17px;font-weight:700;margin:10px 0 4px">\u0e43\u0e1a\u0e02\u0e2d\u0e2d\u0e19\u0e38\u0e21\u0e31\u0e15\u0e34\u0e01\u0e32\u0e23\u0e43\u0e0a\u0e49\u0e08\u0e48\u0e32\u0e22\u0e40\u0e07\u0e34\u0e19\u0e07\u0e1a\u0e1b\u0e23\u0e30\u0e21\u0e32\u0e13 \u0e1b\u0e23\u0e30\u0e08\u0e33\u0e1b\u0e35 '+esc(b.fiscalYear||"")+'</div>'+
+    '<div style="text-align:center;font-size:17px;font-weight:700;margin:10px 0 4px">ใบเสนอพิจารณาจัดสรรงบประมาณ ประจำปี '+esc(b.fiscalYear||"")+'</div>'+
     '<div style="text-align:center;font-size:12px;color:#444">\u0e41\u0e1c\u0e19\u0e01\u0e07\u0e1a\u0e1b\u0e23\u0e30\u0e21\u0e32\u0e13 \u0e1a\u0e23\u0e34\u0e2b\u0e32\u0e23\u0e07\u0e1a\u0e1b\u0e23\u0e30\u0e21\u0e32\u0e13/\u0e01\u0e32\u0e23\u0e40\u0e07\u0e34\u0e19</div>'+
     '<div style="margin-top:10px">\u0e40\u0e23\u0e35\u0e22\u0e19&nbsp;&nbsp;\u0e1c\u0e39\u0e49\u0e1a\u0e23\u0e34\u0e2b\u0e32\u0e23 \u0e40\u0e1e\u0e37\u0e48\u0e2d\u0e42\u0e1b\u0e23\u0e14\u0e1e\u0e34\u0e08\u0e32\u0e23\u0e13\u0e32</div>'+
     '<div style="text-indent:36px;margin-top:6px">\u0e40\u0e1e\u0e37\u0e48\u0e2d\u0e42\u0e1b\u0e23\u0e14\u0e1e\u0e34\u0e08\u0e32\u0e23\u0e13\u0e32 \u0e2b\u0e32\u0e01\u0e40\u0e2b\u0e47\u0e19\u0e0a\u0e2d\u0e1a\u0e02\u0e2d\u0e44\u0e14\u0e49\u0e42\u0e1b\u0e23\u0e14\u0e2d\u0e19\u0e38\u0e21\u0e31\u0e15\u0e34 : '+esc(b.itemName)+' \u0e08\u0e33\u0e19\u0e27\u0e19 '+b.qty+' '+esc(b.unit)+' \u0e21\u0e39\u0e25\u0e04\u0e48\u0e32 '+money(b.value)+' \u0e1a\u0e32\u0e17</div>'+
@@ -1961,6 +2039,7 @@ async function loadRemote(){
           po:r.PO_Number?{number:r.PO_Number,vendor:r.Vendor||""}:null, versions:[],
           log:(function(){try{var L=JSON.parse(r.LogJSON||"[]"); if(Array.isArray(L)&&L.length) return L;}catch(_){} return [{t:"สร้างคำขอซื้อ",by:r.SubmittingUserName||r.Requester||"",at:r.SubmissionDate||r.Created_Date||new Date().toISOString()}];})()};
       }).filter(p=>p.id);
+      dedupeById(DB.prs);
     }
     // map BudgetRequests (BR module)
     if(Array.isArray(S.BudgetRequests)&&S.BudgetRequests.length){
@@ -1968,10 +2047,12 @@ async function loadRemote(){
         id:r.BR_ID, at:r.SubmissionDate||new Date().toISOString(), requester:r.RequesterName||"",
         email:(r.RequesterID||"").toString().toLowerCase(), dept:r.Department||"",
         itemName:r.ItemName||"", reason:r.Reason||"", qty:+r.Qty||0, unit:r.Unit||"", value:+r.Value||0,
-        neededDate:r.NeededDate||"", files:String(r.Files||"").split(",").map(s=>s.trim()).filter(Boolean),
+        fiscalYear:r.FiscalYear||"", neededDate:r.NeededDate||"", files:String(r.Files||"").split(",").map(s=>s.trim()).filter(Boolean),
         hasCode:(r.HasCode===true||r.HasCode==="true"), code:r.Code||"", status:r.Status||"รออนุมัติผู้บริหาร",
+        budgetType:r.BudgetType||"", budgetName:r.BudgetName||"", prDueBy:r.PRDueBy||"", prId:r.PRId||r.PrId||null,
         log:(function(){try{var L=JSON.parse(r.LogJSON||"[]"); if(Array.isArray(L)&&L.length) return L;}catch(_){} return [{t:"สร้างคำของบประมาณ",by:r.RequesterName||"",at:r.SubmissionDate||new Date().toISOString()}];})()
       })).filter(b=>b.id);
+      dedupeById(DB.brs);
     }
     // dropdowns จากชีต (item 2): Departments, ItemTypes, DataBase (catalog)
     if(Array.isArray(S.Departments)) DB.departments=S.Departments.map(d=>d.DepartmentName||d["หน่วยงาน"]||Object.values(d)[0]).filter(Boolean);
